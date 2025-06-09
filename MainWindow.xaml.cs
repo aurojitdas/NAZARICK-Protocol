@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using NAZARICK_Protocol.service;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -51,12 +52,13 @@ namespace NAZARICK_Protocol
 
         private async void MainScanButton_Click(object sender, RoutedEventArgs e)
         {
+            PatternWeaver pw = new PatternWeaver();
             // Update scan info
             ScanInfoTextBox.Text = "Starting quick scan...";
 
             // Simulate scan process
             await Task.Delay(2000);
-            ScanInfoTextBox.Text = $"Quick scan completed at {DateTime.Now:HH:mm:ss}. No threats detected.";
+            ScanInfoTextBox.Text = pw.info();
         }
 
         private void ChangeRulesButton_Click(object sender, RoutedEventArgs e)
