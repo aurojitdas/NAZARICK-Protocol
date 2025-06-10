@@ -15,27 +15,73 @@ namespace NAZARICK_Protocol.service
         Compiler? compiler;
         CompiledRules? rules;
         Scanner? scanner;
+        MainWindow mainWindow;
+
+        public PatternWeaver(MainWindow mainWindow)
+        {
+            this.mainWindow = mainWindow;
+        }
         public String initialize_YARA()
         {
-            YaraContext context = new YaraContext();
-            Compiler compiler = new Compiler();
-            compiler.AddRuleFile("rules\\rule.yara");
-            rules = compiler.Compile();
-            scanner = new Scanner();
-            List<ScanResult> scanResults = scanner.ScanFile("C:\\Windows\\System32\\notepad.exe", rules);
-            Cleanup();
+            mainWindow.ScanInfoTextBox.AppendText("Initializing YARA Compiler!!...\n");
+            context = new YaraContext();
+            compiler = new Compiler();
+            mainWindow.ScanInfoTextBox.AppendText("YARA Compiler initialization SUCCESS!!...\n");
+            mainWindow.ScanInfoTextBox.ScrollToEnd();
+            addRuleFiles("");
+            scanFile("");
+            cleanup();
             return "ScanSuccess";
         }
 
-        public void Cleanup()
+        public void addRuleFiles(String file_path)
         {
-            Console.WriteLine("Cleaning up YARA resources..."); // For debugging
+            if (compiler!=null)
+            {
+                mainWindow.ScanInfoTextBox.AppendText("Loading YARA rules...\n");
+                compiler.AddRuleFile("rules\\rule.yara");
+                mainWindow.ScanInfoTextBox.AppendText("YARA rules Load SUCCESS!!...\n");
+                rules = compiler.Compile();
+                mainWindow.ScanInfoTextBox.AppendText("YARA rules Compilation SUCCESS!!...\n");
+                mainWindow.ScanInfoTextBox.ScrollToEnd();
+            }
+            else
+            {
+                mainWindow.ScanInfoTextBox.AppendText("Compiler init error!!...\n");
+            }
+            
+        }
+
+        public void scanFile(String file_path)
+        {
+            List<ScanResult> scanResults;
+            if (scanner!=null)
+            {
+                mainWindow.ScanInfoTextBox.AppendText("Scanning !!...\n");
+                scanResults = scanner.ScanFile("C:\\Windows\\System32\\notepad.exe", rules);
+                mainWindow.ScanInfoTextBox.AppendText("Scan SUCCESS!!...\n");
+                mainWindow.ScanInfoTextBox.ScrollToEnd();
+            }
+            else
+            {
+                mainWindow.ScanInfoTextBox.AppendText("Scanning !!...\n");
+                scanner = new Scanner();
+                scanResults = scanner.ScanFile("C:\\Windows\\System32\\notepad.exe", rules);
+                mainWindow.ScanInfoTextBox.AppendText("Scan SUCCESS!!...\n");
+                mainWindow.ScanInfoTextBox.ScrollToEnd();
+            }
+                
+        }
+
+        public void cleanup()
+        {
+            mainWindow.ScanInfoTextBox.AppendText("Cleaning up YARA resources...\n"); // For debugging
 
             // Dispose scanner 
             if (scanner != null)
             {                
                 scanner = null; // Set to null to indicate it's disposed
-                Console.WriteLine("Scanner disposed.");
+                mainWindow.ScanInfoTextBox.AppendText("Scanner disposed.\n");
             }
 
             // Dispose compiled rules 
@@ -43,7 +89,7 @@ namespace NAZARICK_Protocol.service
             {
                 rules.Dispose();
                 rules = null;
-                Console.WriteLine("Compiled rules disposed.");
+                mainWindow.ScanInfoTextBox.AppendText("Compiled rules disposed.\n");
             }
 
             // Dispose compiler 
@@ -51,7 +97,7 @@ namespace NAZARICK_Protocol.service
             {
                 compiler.Dispose();
                 compiler = null;
-                Console.WriteLine("Compiler disposed.");
+                mainWindow.ScanInfoTextBox.AppendText("Compiler disposed.\n");
             }
 
             // Dispose YARA context 
@@ -59,10 +105,11 @@ namespace NAZARICK_Protocol.service
             {
                 context.Dispose();
                 context = null;
-                Console.WriteLine("YARA Context disposed.");
+                mainWindow.ScanInfoTextBox.AppendText("YARA Context disposed.\n");                
             }
 
-            Console.WriteLine("YARA cleanup complete.");
+            mainWindow.ScanInfoTextBox.AppendText("YARA cleanup complete.\n");
+            mainWindow.ScanInfoTextBox.ScrollToEnd();
         }
 
 
