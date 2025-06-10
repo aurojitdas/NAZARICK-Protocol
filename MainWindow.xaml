@@ -138,7 +138,7 @@
                                Background="#0078D4" BorderThickness="0"
                                Click="MainScanButton_Click" Cursor="Hand">
                             <Button.Template>
-                                <ControlTemplate TargetType="Button">
+                                <ControlTemplate TargetType="{x:Type Button}">
                                     <Border Background="{TemplateBinding Background}" 
                                             CornerRadius="100">
                                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -175,6 +175,8 @@
                                     BorderThickness="0"
                                     TextWrapping="Wrap"
                                     MinHeight="60"
+                                    MaxHeight="60"
+                                    VerticalScrollBarVisibility="Auto"
                                     Foreground="#666666"/>
                         </StackPanel>
                     </Border>

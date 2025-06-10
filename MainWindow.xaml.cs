@@ -17,9 +17,11 @@ namespace NAZARICK_Protocol
     /// </summary>
     public partial class MainWindow : Window
     {
+        PatternWeaver? pw;
         public MainWindow()
         {
             InitializeComponent();
+            pw= new PatternWeaver(this);
         }
         private void NavigationTab_Checked(object sender, RoutedEventArgs e)
         {
@@ -52,13 +54,14 @@ namespace NAZARICK_Protocol
 
         private async void MainScanButton_Click(object sender, RoutedEventArgs e)
         {
-            PatternWeaver pw = new PatternWeaver();
+            
             // Update scan info
-            ScanInfoTextBox.Text = "Starting quick scan...";
+            ScanInfoTextBox.Text = "Starting quick scan...\n";
 
             // Simulate scan process
             await Task.Delay(2000);
-            ScanInfoTextBox.Text = pw.info();
+            ScanInfoTextBox.AppendText( pw.initialize_YARA()+"\n");
+            ScanInfoTextBox.AppendText("Starting quick scan...IC\n");
         }
 
         private void ChangeRulesButton_Click(object sender, RoutedEventArgs e)
