@@ -1,4 +1,6 @@
-﻿using NAZARICK_Protocol.service;
+﻿using Microsoft.Win32;
+using Microsoft.WindowsAPICodePack.Dialogs;
+using NAZARICK_Protocol.service;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -61,7 +63,8 @@ namespace NAZARICK_Protocol
             // Simulate scan process
             await Task.Delay(2000);
             ScanInfoTextBox.AppendText( pw.initialize_YARA()+"\n");
-            ScanInfoTextBox.AppendText("Starting quick scan...IC\n");
+            //getFilePath();
+            rulesFolderSelect();
         }
 
         private void ChangeRulesButton_Click(object sender, RoutedEventArgs e)
@@ -71,5 +74,48 @@ namespace NAZARICK_Protocol
                           MessageBoxButton.OK,
                           MessageBoxImage.Information);
         }
+
+
+        public String getFilePath()
+        {
+            String? file_Path = null;
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+            bool? result = openFileDialog.ShowDialog();            
+            if (result == true)
+            {
+                
+                file_Path = openFileDialog.FileName;
+                ScanInfoTextBox.Text = file_Path;
+            }
+            else
+            {
+                ScanInfoTextBox.Text = "File Selection Cancelled\n";
+            }
+            return file_Path;
+        }
+
+
+        public String rulesFolderSelect()
+        {
+            String? folder_Path = null;
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.IsFolderPicker = true;
+
+            dialog.Title = "Select YARA Rules Folder";
+            CommonFileDialogResult result = dialog.ShowDialog();
+            if (result == CommonFileDialogResult.Ok)            {
+                
+                folder_Path = dialog.FileName;              
+                ScanInfoTextBox.Text = folder_Path;
+            }
+            else
+            {
+                ScanInfoTextBox.Text = "Folder selection cancelled.";
+            }
+
+            return folder_Path;
+        }
+
     }
 }
