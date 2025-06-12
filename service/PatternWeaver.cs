@@ -28,9 +28,9 @@ namespace NAZARICK_Protocol.service
             compiler = new Compiler();
             mainWindow.ScanInfoTextBox.AppendText("YARA Compiler initialization SUCCESS!!...\n");
             mainWindow.ScanInfoTextBox.ScrollToEnd();
-            addRuleFiles("");
-            scanFile("");
-            cleanup();
+            addRuleFiles("rules\\rule.yara");
+            //scanFile("C:\\Windows\\System32\\notepad.exe");
+            //cleanup();
             return "ScanSuccess";
         }
 
@@ -39,7 +39,7 @@ namespace NAZARICK_Protocol.service
             if (compiler!=null)
             {
                 mainWindow.ScanInfoTextBox.AppendText("Loading YARA rules...\n");
-                compiler.AddRuleFile("rules\\rule.yara");
+                compiler.AddRuleFile(file_path);
                 mainWindow.ScanInfoTextBox.AppendText("YARA rules Load SUCCESS!!...\n");
                 rules = compiler.Compile();
                 mainWindow.ScanInfoTextBox.AppendText("YARA rules Compilation SUCCESS!!...\n");
@@ -55,20 +55,27 @@ namespace NAZARICK_Protocol.service
         public void scanFile(String file_path)
         {
             List<ScanResult> scanResults;
-            if (scanner!=null)
+            if (file_path != null)
             {
-                mainWindow.ScanInfoTextBox.AppendText("Scanning !!...\n");
-                scanResults = scanner.ScanFile("C:\\Windows\\System32\\notepad.exe", rules);
-                mainWindow.ScanInfoTextBox.AppendText("Scan SUCCESS!!...\n");
-                mainWindow.ScanInfoTextBox.ScrollToEnd();
+                if (scanner != null)
+                {
+                    mainWindow.ScanInfoTextBox.AppendText("Scanning !!...\n");
+                    scanResults = scanner.ScanFile(file_path, rules);
+                    mainWindow.ScanInfoTextBox.AppendText("Scan SUCCESS!!...\n");
+                    mainWindow.ScanInfoTextBox.ScrollToEnd();
+                }
+                else
+                {
+                    mainWindow.ScanInfoTextBox.AppendText("Scanning !!...\n"+file_path);
+                    scanner = new Scanner();
+                    scanResults = scanner.ScanFile(file_path, rules);
+                    mainWindow.ScanInfoTextBox.AppendText("Scan SUCCESS!!...\n");
+                    mainWindow.ScanInfoTextBox.ScrollToEnd();
+                }
             }
             else
             {
-                mainWindow.ScanInfoTextBox.AppendText("Scanning !!...\n");
-                scanner = new Scanner();
-                scanResults = scanner.ScanFile("C:\\Windows\\System32\\notepad.exe", rules);
-                mainWindow.ScanInfoTextBox.AppendText("Scan SUCCESS!!...\n");
-                mainWindow.ScanInfoTextBox.ScrollToEnd();
+                mainWindow.ScanInfoTextBox.AppendText("Scan Cancelled!!...\n");
             }
                 
         }
