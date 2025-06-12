@@ -23,7 +23,9 @@ namespace NAZARICK_Protocol
         public MainWindow()
         {
             InitializeComponent();
-            pw= new PatternWeaver(this);
+            this.Closed += MainWindow_Closed;
+            pw = new PatternWeaver(this);
+            pw.initialize_YARA();
         }
         private void NavigationTab_Checked(object sender, RoutedEventArgs e)
         {
@@ -62,17 +64,31 @@ namespace NAZARICK_Protocol
 
             // Simulate scan process
             await Task.Delay(2000);
-            ScanInfoTextBox.AppendText( pw.initialize_YARA()+"\n");
-            //getFilePath();
-            rulesFolderSelect();
+            //ScanInfoTextBox.AppendText( pw.initialize_YARA()+"\n");
+            pw.scanFile(getFilePath());
+            
+            
         }
 
         private void ChangeRulesButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Scan rules configuration will be implemented here.",
-                          "Scan Rules",
-                          MessageBoxButton.OK,
-                          MessageBoxImage.Information);
+           String rulesFolder =  rulesFolderSelect();
+            if (rulesFolder!=null)
+            {
+                MessageBox.Show("Selected Folder: " + rulesFolder,
+                                          "Scan Rules",
+                                          MessageBoxButton.OK,
+                                          MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show("Rules Selection Cancelled",
+                                          "Scan Rules",
+                                          MessageBoxButton.OK,
+                                          MessageBoxImage.Information);
+            }
+            
+
         }
 
 
@@ -117,5 +133,16 @@ namespace NAZARICK_Protocol
             return folder_Path;
         }
 
-    }
+        private void MainWindow_Closed(object sender, EventArgs e)
+        {           
+            Application.Current.Shutdown();
+            if (pw!=null)
+            {
+                pw.cleanup();
+            }
+           
+        }
+    
+
+}
 }
