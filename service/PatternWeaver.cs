@@ -2,6 +2,7 @@
 using dnYara.Interop;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -28,28 +29,74 @@ namespace NAZARICK_Protocol.service
             compiler = new Compiler();
             mainWindow.ScanInfoTextBox.AppendText("YARA Compiler initialization SUCCESS!!...\n");
             mainWindow.ScanInfoTextBox.ScrollToEnd();
-            addRuleFiles("rules\\rule.yara");
+            addRuleFiles("rules\\");
+            compileRules();
             //scanFile("C:\\Windows\\System32\\notepad.exe");
             //cleanup();
             return "ScanSuccess";
         }
 
-        public void addRuleFiles(String file_path)
+        public void addRuleFiles(String folder_path)
         {
-            if (compiler!=null)
+            string absoluteFolderPath = Path.GetFullPath(folder_path);
+            if (!Directory.Exists(folder_path))
             {
-                mainWindow.ScanInfoTextBox.AppendText("Loading YARA rules...\n");
-                compiler.AddRuleFile(file_path);
-                mainWindow.ScanInfoTextBox.AppendText("YARA rules Load SUCCESS!!...\n");
-                rules = compiler.Compile();
-                mainWindow.ScanInfoTextBox.AppendText("YARA rules Compilation SUCCESS!!...\n");
-                mainWindow.ScanInfoTextBox.ScrollToEnd();
+                mainWindow.ScanInfoTextBox.AppendText($"Error: Folder '{absoluteFolderPath}' does not exist.");
+                
             }
-            else
+
+            try
+            {               
+                var ruleFiles = Directory.EnumerateFiles(absoluteFolderPath, "*.yar", SearchOption.AllDirectories)
+                                        .Concat(Directory.EnumerateFiles(absoluteFolderPath, "*.yara", SearchOption.AllDirectories))
+                                        .ToList();
+
+                if (!ruleFiles.Any())
+                {
+                    mainWindow.ScanInfoTextBox.AppendText($"No YARA rule files (*.yar, *.yara) found in '{absoluteFolderPath}'.");
+                    
+                }                
+
+                foreach (var ruleFile in ruleFiles)
+                {
+                    try
+                    {
+                        mainWindow.ScanInfoTextBox.AppendText("Loading YARA rules...\n");
+                        if (compiler != null)
+                        {
+
+                            mainWindow.ScanInfoTextBox.AppendText($"Adding rule file: {ruleFile}\n");
+                            compiler.AddRuleFile(ruleFile);
+                            mainWindow.ScanInfoTextBox.AppendText("YARA rules Load SUCCESS!!...\n");
+
+                        }
+                        else
+                        {
+                            mainWindow.ScanInfoTextBox.AppendText("Compiler init error!!...\n");
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        mainWindow.ScanInfoTextBox.AppendText($"Error adding rule file '{ruleFile}': {ex.Message}aaa\n");
+                    }
+                }
+
+                mainWindow.ScanInfoTextBox.AppendText("All rule files processed. Attempting to compile rules...\n");
+               
+            }
+            catch (Exception ex)
             {
-                mainWindow.ScanInfoTextBox.AppendText("Compiler init error!!...\n");
-            }
-            
+                mainWindow.ScanInfoTextBox.AppendText($"An unexpected error occurred during rule compilation: {ex.Message}");
+                
+            }           
+        }
+
+        public void compileRules()
+        {
+            rules = compiler.Compile();
+            mainWindow.ScanInfoTextBox.AppendText("YARA rules Compilation SUCCESS!!...\n");
+            mainWindow.ScanInfoTextBox.ScrollToEnd();
         }
 
         public void scanFile(String file_path)
