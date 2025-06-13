@@ -26,6 +26,7 @@ namespace NAZARICK_Protocol
             this.Closed += MainWindow_Closed;
             pw = new PatternWeaver(this);
             pw.initialize_YARA();
+
         }
         private void NavigationTab_Checked(object sender, RoutedEventArgs e)
         {
@@ -60,11 +61,11 @@ namespace NAZARICK_Protocol
         {
             
             // Update scan info
-            ScanInfoTextBox.Text = "Starting quick scan...\n";
+            //ScanInfoTextBox.Text = "Starting quick scan...\n";
 
             // Simulate scan process
-            await Task.Delay(2000);
-            //ScanInfoTextBox.AppendText( pw.initialize_YARA()+"\n");
+            //await Task.Delay(2000);
+            ScanInfoTextBox.AppendText( pw.initialize_YARA()+"\n");
             pw.scanFile(getFilePath());
             
             
@@ -90,7 +91,6 @@ namespace NAZARICK_Protocol
             
 
         }
-
 
         public String getFilePath()
         {
