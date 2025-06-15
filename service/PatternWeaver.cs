@@ -24,11 +24,10 @@ namespace NAZARICK_Protocol.service
         }
         public String initialize_YARA()
         {
-            mainWindow.ScanInfoTextBox.AppendText("Initializing YARA Compiler!!...\n");
+            mainWindow.LogMessage("Initializing YARA Compiler!!...");
             context = new YaraContext();
             compiler = new Compiler();
-            mainWindow.ScanInfoTextBox.AppendText("YARA Compiler initialization SUCCESS!!...\n");
-            mainWindow.ScanInfoTextBox.ScrollToEnd();
+            mainWindow.LogMessage("YARA Compiler initialization SUCCESS!!...");            
             addRuleFiles("rules\\");
             compileRules();
             //scanFile("C:\\Windows\\System32\\notepad.exe");
@@ -38,10 +37,11 @@ namespace NAZARICK_Protocol.service
 
         public void addRuleFiles(String folder_path)
         {
+            int rules_no = 0;
             string absoluteFolderPath = Path.GetFullPath(folder_path);
             if (!Directory.Exists(folder_path))
             {
-                mainWindow.ScanInfoTextBox.AppendText($"Error: Folder '{absoluteFolderPath}' does not exist.");
+                mainWindow.LogMessage($"Error: Folder '{absoluteFolderPath}' does not exist.");
                 
             }
 
@@ -53,7 +53,7 @@ namespace NAZARICK_Protocol.service
 
                 if (!ruleFiles.Any())
                 {
-                    mainWindow.ScanInfoTextBox.AppendText($"No YARA rule files (*.yar, *.yara) found in '{absoluteFolderPath}'.");
+                    mainWindow.LogMessage($"No YARA rule files (*.yar, *.yara) found in '{absoluteFolderPath}'.");
                     
                 }                
 
@@ -61,33 +61,33 @@ namespace NAZARICK_Protocol.service
                 {
                     try
                     {
-                        mainWindow.ScanInfoTextBox.AppendText("Loading YARA rules...\n");
+                        mainWindow.LogMessage("Loading YARA rules...");
                         if (compiler != null)
                         {
 
-                            mainWindow.ScanInfoTextBox.AppendText($"Adding rule file: {ruleFile}\n");
+                            //mainWindow.LogMessage($"Adding rule file: {ruleFile}");
                             compiler.AddRuleFile(ruleFile);
-                            mainWindow.ScanInfoTextBox.AppendText("YARA rules Load SUCCESS!!...\n");
-
+                            //mainWindow.LogMessage("YARA rules Load SUCCESS!!...");
+                            rules_no++;
                         }
                         else
                         {
-                            mainWindow.ScanInfoTextBox.AppendText("Compiler init error!!...\n");
+                            mainWindow.LogMessage("Compiler init error!!...");
                         }
 
                     }
                     catch (Exception ex)
                     {
-                        mainWindow.ScanInfoTextBox.AppendText($"Error adding rule file '{ruleFile}': {ex.Message}aaa\n");
+                        mainWindow.LogMessage($"Error adding rule file '{ruleFile}': {ex.Message}aaa");
                     }
                 }
-
-                mainWindow.ScanInfoTextBox.AppendText("All rule files processed. Attempting to compile rules...\n");
+                mainWindow.YaraRulesCountText.Text = "Rules loaded: "+ rules_no;                
+                mainWindow.LogMessage("All rule files processed. Attempting to compile rules...");
                
             }
             catch (Exception ex)
             {
-                mainWindow.ScanInfoTextBox.AppendText($"An unexpected error occurred during rule compilation: {ex.Message}");
+                mainWindow.LogMessage($"An unexpected error occurred during rule compilation: {ex.Message}");
                 
             }           
         }
@@ -95,8 +95,9 @@ namespace NAZARICK_Protocol.service
         public void compileRules()
         {
             rules = compiler.Compile();
-            mainWindow.ScanInfoTextBox.AppendText("YARA rules Compilation SUCCESS!!...\n");
-            mainWindow.ScanInfoTextBox.ScrollToEnd();
+            mainWindow.YaraRulesStatusText.Text = "Compiled successfully";
+            mainWindow.LogMessage("YARA rules Compilation SUCCESS!!...");
+            
         }
 
         public void scanFile(String file_path)
@@ -106,18 +107,17 @@ namespace NAZARICK_Protocol.service
             {
                 if (scanner != null)
                 {
-                    mainWindow.ScanInfoTextBox.AppendText("Scanning !!...\n");
+                    mainWindow.LogMessage("Scanning !!...");
                     scanResults = scanner.ScanFile(file_path, rules);
-                    mainWindow.ScanInfoTextBox.AppendText("Scan SUCCESS!!...\n");
-                    mainWindow.ScanInfoTextBox.ScrollToEnd();
+                    mainWindow.LogMessage("Scan SUCCESS!!...");                   
                     displayScanResults(scanResults);
                 }
                 else
                 {
-                    mainWindow.ScanInfoTextBox.AppendText("Scanning !!...\n"+file_path);
+                    mainWindow.LogMessage("Scanning !!..."+file_path);
                     scanner = new Scanner();
                     scanResults  = scanner.ScanFile(file_path, rules);
-                    mainWindow.ScanInfoTextBox.AppendText("Scan SUCCESS!!...\n");
+                    mainWindow.LogMessage("Scan SUCCESS!!...");
                     displayScanResults(scanResults);
                     mainWindow.ScanInfoTextBox.ScrollToEnd();
                 }
@@ -125,20 +125,20 @@ namespace NAZARICK_Protocol.service
             }
             else
             {
-                mainWindow.ScanInfoTextBox.AppendText("Scan Cancelled!!...\n");
+                mainWindow.LogMessage("Scan Cancelled!!...");
             }
                 
         }
 
         public void cleanup()
         {
-            mainWindow.ScanInfoTextBox.AppendText("Cleaning up YARA resources...\n"); // For debugging
+            mainWindow.LogMessage("Cleaning up YARA resources...\n"); // For debugging
 
             // Dispose scanner 
             if (scanner != null)
             {                
                 scanner = null; // Set to null to indicate it's disposed
-                mainWindow.ScanInfoTextBox.AppendText("Scanner disposed.\n");
+                mainWindow.LogMessage("Scanner disposed.\n");
             }
 
             // Dispose compiled rules 
@@ -146,7 +146,7 @@ namespace NAZARICK_Protocol.service
             {
                 rules.Dispose();
                 rules = null;
-                mainWindow.ScanInfoTextBox.AppendText("Compiled rules disposed.\n");
+                mainWindow.LogMessage("Compiled rules disposed.\n");
             }
 
             // Dispose compiler 
@@ -154,7 +154,7 @@ namespace NAZARICK_Protocol.service
             {
                 compiler.Dispose();
                 compiler = null;
-                mainWindow.ScanInfoTextBox.AppendText("Compiler disposed.\n");
+                mainWindow.LogMessage("Compiler disposed.\n");
             }
 
             // Dispose YARA context 
@@ -162,10 +162,10 @@ namespace NAZARICK_Protocol.service
             {
                 context.Dispose();
                 context = null;
-                mainWindow.ScanInfoTextBox.AppendText("YARA Context disposed.\n");                
+                mainWindow.LogMessage("YARA Context disposed.\n");                
             }
 
-            mainWindow.ScanInfoTextBox.AppendText("YARA cleanup complete.\n");
+            mainWindow.LogMessage("YARA cleanup complete.\n");
             mainWindow.ScanInfoTextBox.ScrollToEnd();
         }
 
@@ -173,16 +173,16 @@ namespace NAZARICK_Protocol.service
         {
             if (scanResults != null && scanResults.Count > 0)
             {
-                mainWindow.ScanInfoTextBox.AppendText($"\n--- THREATS DETECTED ---\n");
+                mainWindow.LogMessage($"\n--- THREATS DETECTED ---\n");
                 foreach (var result in scanResults)
                 {
-                    mainWindow.ScanInfoTextBox.AppendText($"Rule matched: {result.MatchingRule.Identifier}\n");
+                    mainWindow.LogMessage($"Rule matched: {result.MatchingRule.Identifier}\n");
                 }
-                mainWindow.ScanInfoTextBox.AppendText($"Total rules matched: {scanResults.Count}\n");
+                mainWindow.LogMessage($"Total rules matched: {scanResults.Count}\n");
             }
             else
             {
-                mainWindow.ScanInfoTextBox.AppendText("No threats detected.\n");
+                mainWindow.LogMessage("No threats detected.\n");
             }
         }
 

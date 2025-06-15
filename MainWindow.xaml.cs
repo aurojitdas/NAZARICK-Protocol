@@ -44,9 +44,7 @@ namespace NAZARICK_Protocol
             string yaraResult = pw.initialize_YARA();
             LogMessage($"[INFO] {yaraResult}");
 
-            // Update UI elements
-            YaraRulesStatusText.Text = "Loaded successfully";
-            YaraRulesCountText.Text = "Rules loaded: Unknown"; // You can update this with actual count
+            // Update UI elements           
             LastUpdateText.Text = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
 
             
@@ -62,7 +60,7 @@ namespace NAZARICK_Protocol
 
         private void UpdateSystemInfo(object sender, EventArgs e)
         {
-            // Simulate system monitoring (replace with actual system calls)
+            // Simulate system monitoring (need to replace with actual system calls)
             Random rand = new Random();
 
             // Update CPU usage
@@ -146,10 +144,10 @@ namespace NAZARICK_Protocol
             LogMessage("[INFO] Starting quick scan...");
 
             // Update scan info
-            ScanInfoTextBox.Text = "Starting quick scan...\n";
+           // ScanInfoTextBox.Text = "Starting quick scan...\n";
 
             try
-            {   ScanInfoTextBox.AppendText(pw.initialize_YARA() + "\n");
+            {   //ScanInfoTextBox.AppendText(pw.initialize_YARA() + "\n");
                 string filePath = getFilePath();
                 if (!string.IsNullOrEmpty(filePath))
                 {
