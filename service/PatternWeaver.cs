@@ -33,7 +33,7 @@ namespace NAZARICK_Protocol.service
             compileRules();
             //scanFile("C:\\Windows\\System32\\notepad.exe");
             //cleanup();
-            return "ScanSuccess";
+            return "YARA Initialized Succesfully";
         }
 
         public void addRuleFiles(String folder_path)
