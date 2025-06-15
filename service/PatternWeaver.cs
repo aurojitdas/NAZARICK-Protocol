@@ -110,15 +110,18 @@ namespace NAZARICK_Protocol.service
                     scanResults = scanner.ScanFile(file_path, rules);
                     mainWindow.ScanInfoTextBox.AppendText("Scan SUCCESS!!...\n");
                     mainWindow.ScanInfoTextBox.ScrollToEnd();
+                    displayScanResults(scanResults);
                 }
                 else
                 {
                     mainWindow.ScanInfoTextBox.AppendText("Scanning !!...\n"+file_path);
                     scanner = new Scanner();
-                    scanResults = scanner.ScanFile(file_path, rules);
+                    scanResults  = scanner.ScanFile(file_path, rules);
                     mainWindow.ScanInfoTextBox.AppendText("Scan SUCCESS!!...\n");
+                    displayScanResults(scanResults);
                     mainWindow.ScanInfoTextBox.ScrollToEnd();
                 }
+                
             }
             else
             {
@@ -166,9 +169,23 @@ namespace NAZARICK_Protocol.service
             mainWindow.ScanInfoTextBox.ScrollToEnd();
         }
 
+        private void displayScanResults(List<ScanResult> scanResults)
+        {
+            if (scanResults != null && scanResults.Count > 0)
+            {
+                mainWindow.ScanInfoTextBox.AppendText($"\n--- THREATS DETECTED ---\n");
+                foreach (var result in scanResults)
+                {
+                    mainWindow.ScanInfoTextBox.AppendText($"Rule matched: {result.MatchingRule.Identifier}\n");
+                }
+                mainWindow.ScanInfoTextBox.AppendText($"Total rules matched: {scanResults.Count}\n");
+            }
+            else
+            {
+                mainWindow.ScanInfoTextBox.AppendText("No threats detected.\n");
+            }
+        }
 
     }
-
-
 
 }
