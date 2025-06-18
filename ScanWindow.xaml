@@ -1,0 +1,207 @@
+﻿<Window x:Class="NAZARICK_Protocol.ScanWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="N.A.Z.A.R.I.C.K. Protocol - Scan Results" Height="500" Width="800"
+        WindowStartupLocation="CenterScreen"
+        Background="#F5F5F5">
+
+    <Window.Resources>
+        <!-- Card Style -->
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="10"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="Gray" Direction="270" ShadowDepth="2" Opacity="0.2" BlurRadius="8"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Expandable Section Style -->
+        <Style x:Key="ExpandableHeaderStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F0F0F0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Progress Bar Style -->
+        <Style x:Key="ScanProgressStyle" TargetType="ProgressBar">
+            <Setter Property="Height" Value="6"/>
+            <Setter Property="Background" Value="#E0E0E0"/>
+            <Setter Property="Foreground" Value="#0078D4"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <!-- Standard Button Style -->
+        <Style x:Key="StandardButtonStyle" TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Opacity" Value="0.7"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header Section -->
+        <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+            <StackPanel Margin="30,20"> 
+                
+                <!-- Scan Title and Status -->
+                <StackPanel>
+                    <TextBlock x:Name="ScanTitleText" Text="Quick Scan" FontSize="28" FontWeight="Bold" 
+                              Foreground="#333333" Margin="0,0,0,5"/>
+                    <TextBlock x:Name="ScanStatusText" Text="Scanning for threats..." FontSize="14" 
+                              Foreground="#666666"/>
+                </StackPanel>
+
+                <!-- Scan Progress -->
+                <StackPanel x:Name="ProgressSection" Margin="0,15,0,0">
+                    <ProgressBar x:Name="ScanProgressBar" Style="{StaticResource ScanProgressStyle}" 
+                                IsIndeterminate="True"/>
+                    <TextBlock x:Name="CurrentFileText" Text="Scanning: C:\Windows\System32\..." 
+                              FontSize="12" Foreground="#666666" Margin="0,5,0,0"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Results Section -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="20,10,20,10">
+            <StackPanel>              
+
+                <!-- Items Scanned Section -->
+                <Border Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <Button x:Name="ItemsScannedButton" Style="{StaticResource ExpandableHeaderStyle}"
+                               Click="ToggleItemsScanned_Click">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Items scanned" FontSize="16" Foreground="#333333" 
+                                          VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TotalItemsText" Text="0" FontSize="16" 
+                                          Foreground="#333333" VerticalAlignment="Center" Grid.Column="1"/>
+                                <TextBlock x:Name="ItemsExpandIcon" Text="▼" FontSize="12" 
+                                          Foreground="#666666" Margin="10,0,0,0" VerticalAlignment="Center" Grid.Column="2"/>
+                            </Grid>
+                        </Button>
+
+                        <!-- Expandable Items Details -->
+                        <StackPanel x:Name="ItemsDetailsPanel" Margin="0,15,0,0">
+                            <!-- Files -->
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="📄" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBlock Text="Files" FontSize="14" Foreground="#333333" 
+                                          VerticalAlignment="Center" Grid.Column="1"/>
+                                <TextBlock x:Name="FilesCountText" Text="0" FontSize="14" 
+                                          Foreground="#333333" VerticalAlignment="Center" Grid.Column="2"/>
+                            </Grid>
+
+                            <!-- Folders -->
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="📁" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBlock Text="Folders" FontSize="14" Foreground="#333333" 
+                                          VerticalAlignment="Center" Grid.Column="1"/>
+                                <TextBlock x:Name="FoldersCountText" Text="0" FontSize="14" 
+                                          Foreground="#333333" VerticalAlignment="Center" Grid.Column="2"/>
+                            </Grid>
+
+                            <!-- Data -->
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="💾" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBlock Text="Data" FontSize="14" Foreground="#333333" 
+                                          VerticalAlignment="Center" Grid.Column="1"/>
+                                <TextBlock x:Name="DataSizeText" Text="0 B" FontSize="14" 
+                                          Foreground="#333333" VerticalAlignment="Center" Grid.Column="2"/>
+                            </Grid>
+
+                            <!-- Infected Files -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="🦠" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBlock Text="Infected files" FontSize="14" Foreground="#333333" 
+                                          VerticalAlignment="Center" Grid.Column="1"/>
+                                <TextBlock x:Name="InfectedFilesText" Text="0" FontSize="14" 
+                                          Foreground="#333333" FontWeight="Bold" VerticalAlignment="Center" Grid.Column="2"/>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Action Buttons -->
+        <Border Grid.Row="2" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="30,15">
+                <Button x:Name="StopButton" Content="Stop Scan" Width="100" Height="35" 
+                       Background="#FF4444" Foreground="White" BorderThickness="0"
+                       Style="{StaticResource StandardButtonStyle}"
+                       Click="StopButton_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
