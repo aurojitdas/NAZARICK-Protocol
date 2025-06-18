@@ -17,10 +17,12 @@ namespace NAZARICK_Protocol.service
         CompiledRules? rules;
         Scanner? scanner;
         MainWindow mainWindow;
+        private ScanWindow currentScanWindow;
 
         public PatternWeaver(MainWindow mainWindow)
         {
-            this.mainWindow = mainWindow;
+            this.mainWindow = mainWindow;           
+
         }
         public String initialize_YARA()
         {
@@ -102,26 +104,24 @@ namespace NAZARICK_Protocol.service
 
         public void scanFile(String file_path)
         {
+            ShowScanWindow();
             List<ScanResult> scanResults;
             if (file_path != null)
             {
-                if (scanner != null)
-                {
-                    mainWindow.LogMessage("Scanning !!...");
-                    scanResults = scanner.ScanFile(file_path, rules);
-                    mainWindow.LogMessage("Scan SUCCESS!!...");                   
-                    displayScanResults(scanResults);
-                }
+                if (scanner != null) { }
                 else
                 {
-                    mainWindow.LogMessage("Scanning !!..."+file_path);
                     scanner = new Scanner();
-                    scanResults  = scanner.ScanFile(file_path, rules);
-                    mainWindow.LogMessage("Scan SUCCESS!!...");
-                    displayScanResults(scanResults);
-                    mainWindow.ScanInfoTextBox.ScrollToEnd();
                 }
-                
+
+                mainWindow.LogMessage("Scanning !!...");
+                currentScanWindow.UpdateCurrentFile(file_path);
+                scanResults = scanner.ScanFile(file_path, rules);
+                currentScanWindow.AddFilesScanned();
+                mainWindow.LogMessage("Scan SUCCESS!!...");
+                currentScanWindow.CompleteScan();
+                displayScanResults(scanResults, file_path);
+
             }
             else
             {
@@ -169,7 +169,7 @@ namespace NAZARICK_Protocol.service
             mainWindow.ScanInfoTextBox.ScrollToEnd();
         }
 
-        private void displayScanResults(List<ScanResult> scanResults)
+        private void displayScanResults(List<ScanResult> scanResults,string filepath)
         {
             if (scanResults != null && scanResults.Count > 0)
             {
@@ -177,6 +177,8 @@ namespace NAZARICK_Protocol.service
                 foreach (var result in scanResults)
                 {
                     mainWindow.LogMessage($"Rule matched: {result.MatchingRule.Identifier}\n");
+                    mainWindow.ReportThreatDetected(result.MatchingRule.Identifier,filepath);
+                    currentScanWindow.ReportThreatDetected(result.MatchingRule.Identifier,filepath);
                 }
                 mainWindow.LogMessage($"Total rules matched: {scanResults.Count}\n");
             }
@@ -184,6 +186,16 @@ namespace NAZARICK_Protocol.service
             {
                 mainWindow.LogMessage("No threats detected.\n");
             }
+        }
+
+        private void ShowScanWindow()
+        {
+            currentScanWindow = new ScanWindow();
+            //currentScanWindow.Owner = this;
+            currentScanWindow.Show(); // Use Show() instead of ShowDialog() for non-blocking
+
+            // Start the scan window
+            currentScanWindow.StartScan();
         }
 
     }
