@@ -18,11 +18,12 @@ namespace NAZARICK_Protocol.service
         Scanner? scanner;
         MainWindow mainWindow;
         private ScanWindow currentScanWindow;
+        private VirusTotalAPI vt;
 
         public PatternWeaver(MainWindow mainWindow)
         {
-            this.mainWindow = mainWindow;           
-
+            this.mainWindow = mainWindow;
+            vt = new VirusTotalAPI("68d9e1716c7df15e701bcce1addafd4231c2d288c5869726ecb9a31ff28ba878", this.mainWindow);
         }
         public String initialize_YARA()
         {
@@ -102,7 +103,7 @@ namespace NAZARICK_Protocol.service
             
         }
 
-        public void scanFile(String file_path)
+        public async Task scanFile(String file_path)
         {
             ShowScanWindow();
             List<ScanResult> scanResults;
@@ -115,6 +116,15 @@ namespace NAZARICK_Protocol.service
                 }
 
                 mainWindow.LogMessage("Scanning !!...");
+                string response = await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
+                if (!string.IsNullOrEmpty(response)) {
+                    mainWindow.LogMessage(response);
+                }
+                VirusTotalFileAnalysis? op = vt.ParseFileAnalysis(response);
+                mainWindow.LogMessage(op.MeaningfulName);
+                mainWindow.LogMessage(op.IsMalicious.ToString());
+                mainWindow.LogMessage(op.MaliciousDetections.ToString());
+                mainWindow.LogMessage(op.ThreatLabel);
                 currentScanWindow.UpdateCurrentFile(file_path);
                 scanResults = scanner.ScanFile(file_path, rules);
                 currentScanWindow.AddFilesScanned();
