@@ -13,6 +13,7 @@
     <PackageReference Include="dnYara" Version="2.1.0" />
     <PackageReference Include="dnYara.NativePack" Version="2.1.0.3" />
     <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.5" />
+    <PackageReference Include="PeNet" Version="5.1.0" />
   </ItemGroup>
 
 </Project>
