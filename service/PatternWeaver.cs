@@ -120,7 +120,7 @@ namespace NAZARICK_Protocol.service
                 if (!string.IsNullOrEmpty(response)) {
                     mainWindow.LogMessage(response);
                 }
-                VirusTotalFileAnalysisResult? op = vt.ParseFileAnalysis(response);
+                VirusTotalFileAnalysis? op = vt.ParseFileAnalysis(response);
                 mainWindow.LogMessage(op.MeaningfulName);
                 mainWindow.LogMessage(op.IsMalicious.ToString());
                 mainWindow.LogMessage(op.MaliciousDetections.ToString());
