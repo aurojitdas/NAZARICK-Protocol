@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace NAZARICK_Protocol.service
 {
-    public class VirusTotalFileAnalysis
+    public class VirusTotalFileAnalysisResult
     {
        
         public bool IsMalicious { get; set; }        
