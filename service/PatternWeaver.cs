@@ -1,5 +1,6 @@
 ﻿using dnYara;
 using dnYara.Interop;
+using NAZARICK_Protocol.service.Results;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,6 +20,7 @@ namespace NAZARICK_Protocol.service
         MainWindow mainWindow;
         private ScanWindow currentScanWindow;
         private VirusTotalAPI vt;
+        PEAnalyzer Pe;
 
         public PatternWeaver(MainWindow mainWindow)
         {
@@ -33,6 +35,7 @@ namespace NAZARICK_Protocol.service
             mainWindow.LogMessage("YARA Compiler initialization SUCCESS!!...");            
             addRuleFiles("rules\\");
             compileRules();
+            Pe = new PEAnalyzer();
             //scanFile("C:\\Windows\\System32\\notepad.exe");
             //cleanup();
             return "YARA Initialized Succesfully";
@@ -116,19 +119,21 @@ namespace NAZARICK_Protocol.service
                 }
 
                 mainWindow.LogMessage("Scanning !!...");
-                string response = await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
-                if (!string.IsNullOrEmpty(response)) {
-                    mainWindow.LogMessage(response);
-                }
-                VirusTotalFileAnalysis? op = vt.ParseFileAnalysis(response);
-                mainWindow.LogMessage(op.MeaningfulName);
-                mainWindow.LogMessage(op.IsMalicious.ToString());
-                mainWindow.LogMessage(op.MaliciousDetections.ToString());
-                mainWindow.LogMessage(op.ThreatLabel);
+                //string response = await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
+                //if (!string.IsNullOrEmpty(response)) {
+                //    mainWindow.LogMessage(response);
+               // }
+                //VirusTotalFileAnalysis? op = vt.ParseFileAnalysis(response);
+                PEAnalysisResult pr = Pe.Analyze(file_path);
+               // mainWindow.LogMessage(op.MeaningfulName);
+               // mainWindow.LogMessage(op.IsMalicious.ToString());
+               // mainWindow.LogMessage(op.MaliciousDetections.ToString());
+               // mainWindow.LogMessage(op.ThreatLabel);
                 currentScanWindow.UpdateCurrentFile(file_path);
                 scanResults = scanner.ScanFile(file_path, rules);
                 currentScanWindow.AddFilesScanned();
                 mainWindow.LogMessage("Scan SUCCESS!!...");
+                mainWindow.LogMessage(pr.ToString());
                 currentScanWindow.CompleteScan();
                 displayScanResults(scanResults, file_path);
 

@@ -55,7 +55,7 @@ namespace NAZARICK_Protocol.service
 
             if (!File.Exists(filePath))
             {
-                result.Errors.Add("File does not exist.");
+                result.Errors.Add("File does not exist." +filePath);
                 return result;
             }
 
@@ -73,7 +73,7 @@ namespace NAZARICK_Protocol.service
             {
                 // Catch errors from PeNet if the file is not a valid PE,
                 result.IsValidPeFile = false;
-                result.Errors.Add($"PE parsing failed: {ex.Message}");
+                result.Errors.Add($"PE parsing failed: {ex.Message} "+filePath);
             }
 
             return result;
