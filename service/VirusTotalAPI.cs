@@ -54,9 +54,6 @@ namespace NAZARICK_Protocol.service
                 return null;
             }
         }
-
-
-        // =============== NEW, COMPREHENSIVE PARSER ===============
         /// <summary>
         /// Parses a raw JSON response into a complete file analysis object.
         /// </summary>
@@ -105,7 +102,7 @@ namespace NAZARICK_Protocol.service
                                       stats.GetProperty("harmless").GetInt32() +
                                       stats.GetProperty("timeout").GetInt32();
 
-                // Try to get the common threat name, if available
+                // get the common threat name, if available
                 if (attributes.TryGetProperty("popular_threat_classification", out var threatClassification) &&
                     threatClassification.TryGetProperty("suggested_threat_label", out var threatLabelElement))
                 {
