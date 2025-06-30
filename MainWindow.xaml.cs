@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using NAZARICK_Protocol.service;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -27,6 +28,7 @@ namespace NAZARICK_Protocol
         private int filesScannedToday = 0;
         private int threatsBlockedToday = 0;
         private RealTimeMonitor _monitor;
+        private String _currentWatchPath;
 
         public MainWindow()
         {
@@ -146,6 +148,7 @@ namespace NAZARICK_Protocol
 
         private async void MainScanButton_Click(object sender, RoutedEventArgs e)
         {
+
             LogMessage("[INFO] Starting quick scan...");
 
             // Update scan info
@@ -258,14 +261,25 @@ namespace NAZARICK_Protocol
         public void initalizeRealTimeMonitor()
         {
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            string watchPath = System.IO.Path.Combine(desktopPath, "TestFolder");
+            string initialPath = System.IO.Path.Combine(desktopPath, "TestFolder");
+            startMonitor(initialPath);
 
+        }
+
+        public void startMonitor(String Path)
+        {
+            // Stop and unsubscribe from any existing monitor to prevent duplicates
+            if (_monitor != null)
+            {
+                _monitor.Stop();
+                _monitor.FileChanged -= Monitor_FileChanged;
+            }
             // Directory Check before starting.
-            if (!Directory.Exists(watchPath))
+            if (!Directory.Exists(Path))
             {
                 try
                 {
-                    Directory.CreateDirectory(watchPath);
+                    Directory.CreateDirectory(Path);
                 }
                 catch (Exception ex)
                 {
@@ -274,27 +288,25 @@ namespace NAZARICK_Protocol
                 }
             }
 
-            // --- INITIALIZE AND START THE MONITOR ---
+
+            // Initialize and start the new monitor
             try
             {
-                _monitor = new RealTimeMonitor(watchPath);
-
-                // --- SUBSCRIBE TO THE EVENT ---
-                // The 'Monitor_FileChanged' method will be called whenever a file is
-                // created, changed, or renamed in the monitored folder.
+                _monitor = new RealTimeMonitor(Path);
                 _monitor.FileChanged += Monitor_FileChanged;
-
-                // --- START MONITORING ---
                 _monitor.Start();
-                
-                Debug.WriteLine($"Monitoring started on: {watchPath}");
 
+                _currentWatchPath = Path; // Store the new path
+
+                // Update the UI on the main thread
+                Dispatcher.Invoke(() => CurrentMonitoringPathText.Text = _currentWatchPath);
+                LogMessage($"[INFO] Real-time monitoring started on: {Path}");
             }
             catch (ArgumentException ex)
             {
                 MessageBox.Show($"Error initializing monitor: {ex.Message}");
+                LogMessage($"[ERROR] Failed to initialize monitor: {ex.Message}");
             }
-
         }
 
         private void Monitor_FileChanged(string filePath)
@@ -303,7 +315,39 @@ namespace NAZARICK_Protocol
              this.Dispatcher.Invoke(() => 
             {
                 LogMessage($"File changed: {filePath}");
+                // pw.scanFile(filePath);
             });                    
         }
+
+        /// <summary>
+        /// Handles the click event for changing the real-time monitoring path.
+        /// </summary>
+        private void ChangeMonitoringPathButton_Click(object sender, RoutedEventArgs e)
+        {
+            LogMessage("[INFO] Opening monitoring path selection dialog...");
+
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.IsFolderPicker = true;
+            dialog.Title = "Select Folder to Monitor";
+
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                string newPath = dialog.FileName;
+                LogMessage($"[INFO] New monitoring path selected: {newPath}");
+
+                // Restart the monitor with the new path
+                startMonitor(newPath);
+
+                MessageBox.Show("Monitoring path updated to: " + newPath,
+                                "Real-time Monitoring",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Information);
+            }
+            else
+            {
+                LogMessage("[INFO] Monitoring path selection cancelled.");
+            }
+        }
+
     }
 }

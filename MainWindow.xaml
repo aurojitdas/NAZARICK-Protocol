@@ -17,8 +17,8 @@
                                 Margin="8,2"
                                 CornerRadius="4">
                             <ContentPresenter HorizontalAlignment="Left" 
-                                            VerticalAlignment="Center"
-                                            Content="{TemplateBinding Content}"/>
+                                              VerticalAlignment="Center"
+                                              Content="{TemplateBinding Content}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -53,7 +53,7 @@
                                 CornerRadius="4"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" 
-                                            VerticalAlignment="Center"/>
+                                              VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -116,25 +116,25 @@
                 <StackPanel Orientation="Horizontal" Margin="20,0,20,30">
                     <TextBlock Text="🛡️" FontSize="24" VerticalAlignment="Center"/>
                     <TextBlock Text="N.A.Z.A.R.I.K." FontSize="16" FontWeight="SemiBold" 
-                              Margin="10,0,0,0" VerticalAlignment="Center" Foreground="White"/>
+                                 Margin="10,0,0,0" VerticalAlignment="Center" Foreground="White"/>
                 </StackPanel>
 
                 <!-- Navigation Buttons -->
                 <RadioButton x:Name="HomeTab" Content="🏠 Home" IsChecked="True" 
-                            Style="{StaticResource NavigationButtonStyle}"
-                            Checked="NavigationTab_Checked" Tag="Home" Foreground="White"/>
+                             Style="{StaticResource NavigationButtonStyle}"
+                             Checked="NavigationTab_Checked" Tag="Home" Foreground="White"/>
                 <RadioButton x:Name="ScanTab" Content="🔍 Scan" 
-                            Style="{StaticResource NavigationButtonStyle}"
-                            Checked="NavigationTab_Checked" Tag="Scan" Foreground="White"/>
+                             Style="{StaticResource NavigationButtonStyle}"
+                             Checked="NavigationTab_Checked" Tag="Scan" Foreground="White"/>
                 <RadioButton x:Name="SettingsTab" Content="⚙️ Settings" 
-                            Style="{StaticResource NavigationButtonStyle}"
-                            Checked="NavigationTab_Checked" Tag="Settings" Foreground="White"/>
+                             Style="{StaticResource NavigationButtonStyle}"
+                             Checked="NavigationTab_Checked" Tag="Settings" Foreground="White"/>
                 <RadioButton x:Name="InfoTab" Content="📊 Info" 
-                            Style="{StaticResource NavigationButtonStyle}"
-                            Checked="NavigationTab_Checked" Tag="Info" Foreground="White"/>
+                             Style="{StaticResource NavigationButtonStyle}"
+                             Checked="NavigationTab_Checked" Tag="Info" Foreground="White"/>
                 <RadioButton x:Name="AboutTab" Content="ℹ️ About" 
-                            Style="{StaticResource NavigationButtonStyle}"
-                            Checked="NavigationTab_Checked" Tag="About" Foreground="White"/>
+                             Style="{StaticResource NavigationButtonStyle}"
+                             Checked="NavigationTab_Checked" Tag="About" Foreground="White"/>
             </StackPanel>
         </Border>
 
@@ -157,7 +157,7 @@
                         <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
                             <Ellipse x:Name="SystemStatusIndicator" Fill="#00FF00" Style="{StaticResource StatusIndicatorStyle}"/>
                             <TextBlock x:Name="SystemStatusText" Text="System Protected - All services running" FontSize="14" 
-                                      Foreground="#666666" VerticalAlignment="Center"/>
+                                       Foreground="#666666" VerticalAlignment="Center"/>
                         </StackPanel>
                     </StackPanel>
 
@@ -200,8 +200,8 @@
                     <!-- Main Scan Button -->
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Button x:Name="MainScanButton" Width="200" Height="200" 
-                               Background="#0078D4" BorderThickness="0"
-                               Click="MainScanButton_Click" Cursor="Hand">
+                                Background="#0078D4" BorderThickness="0"
+                                Click="MainScanButton_Click" Cursor="Hand">
                             <Button.Template>
                                 <ControlTemplate TargetType="{x:Type Button}">
                                     <Border Background="{TemplateBinding Background}" 
@@ -209,7 +209,7 @@
                                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <TextBlock Text="🛡️" FontSize="48" HorizontalAlignment="Center"/>
                                             <TextBlock Text="SCAN NOW" FontSize="16" FontWeight="Bold" 
-                                                      Foreground="White" Margin="0,10,0,0" HorizontalAlignment="Center"/>
+                                                       Foreground="White" Margin="0,10,0,0" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                     </Border>
                                     <ControlTemplate.Triggers>
@@ -224,25 +224,25 @@
                             </Button.Template>
                         </Button>
                         <TextBlock Text="Click to start a quick scan" FontSize="12" 
-                                  HorizontalAlignment="Center" Margin="0,15,0,0"
-                                  Foreground="#666666"/>
+                                     HorizontalAlignment="Center" Margin="0,15,0,0"
+                                     Foreground="#666666"/>
                     </StackPanel>
 
                     <!-- Original Scan Info TextBox -->
                     <Border Grid.Row="3" Margin="40,20,40,40" Style="{StaticResource CardStyle}">
                         <StackPanel>
                             <TextBlock Text="Scan Information" FontSize="16" FontWeight="SemiBold" 
-                                      Margin="0,0,0,10" Foreground="#333333"/>
+                                       Margin="0,0,0,10" Foreground="#333333"/>
                             <TextBox x:Name="ScanInfoTextBox" 
-                                    Text="System ready for scanning. Last scan: Never"
-                                    IsReadOnly="True" 
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    TextWrapping="Wrap"
-                                    MinHeight="60"
-                                    MaxHeight="60"
-                                    VerticalScrollBarVisibility="Auto"
-                                    Foreground="#666666"/>
+                                     Text="System ready for scanning. Last scan: Never"
+                                     IsReadOnly="True" 
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     TextWrapping="Wrap"
+                                     MinHeight="60"
+                                     MaxHeight="60"
+                                     VerticalScrollBarVisibility="Auto"
+                                     Foreground="#666666"/>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -251,7 +251,7 @@
                 <Grid x:Name="ScanPage" Visibility="Collapsed">
                     <StackPanel Margin="40,30,40,40">
                         <TextBlock Text="Scan Options" FontSize="28" FontWeight="Bold" 
-                                  Margin="0,0,0,30" Foreground="#333333"/>
+                                   Margin="0,0,0,30" Foreground="#333333"/>
 
                         <!-- Scan Types -->
                         <StackPanel>
@@ -259,7 +259,7 @@
                                 <StackPanel>
                                     <TextBlock Text="Quick Scan" FontSize="18" FontWeight="SemiBold" Foreground="#333333"/>
                                     <TextBlock Text="Scans the most common areas where malware is found" 
-                                              FontSize="14" Margin="0,5,0,15" Foreground="#666666"/>
+                                               FontSize="14" Margin="0,5,0,15" Foreground="#666666"/>
                                     <Button Content="Start Quick Scan" Width="150" HorizontalAlignment="Left"
                                            Style="{StaticResource AccentButtonStyle}" Click="MainScanButton_Click"/>
                                 </StackPanel>
@@ -269,7 +269,7 @@
                                 <StackPanel>
                                     <TextBlock Text="Full System Scan" FontSize="18" FontWeight="SemiBold" Foreground="#333333"/>
                                     <TextBlock Text="Comprehensive scan of your entire system" 
-                                              FontSize="14" Margin="0,5,0,15" Foreground="#666666"/>
+                                               FontSize="14" Margin="0,5,0,15" Foreground="#666666"/>
                                     <Button Content="Start Full Scan" Width="150" HorizontalAlignment="Left"
                                            Background="#666666" Foreground="White" BorderThickness="0"
                                            Padding="16,8" Cursor="Hand"/>
@@ -280,15 +280,15 @@
                                 <StackPanel>
                                     <TextBlock Text="Custom Scan" FontSize="18" FontWeight="SemiBold" Foreground="#333333"/>
                                     <TextBlock Text="Choose specific folders and files to scan" 
-                                              FontSize="14" Margin="0,5,0,15" Foreground="#666666"/>
+                                               FontSize="14" Margin="0,5,0,15" Foreground="#666666"/>
                                     <StackPanel Orientation="Horizontal">
                                         <Button Content="Choose Location" Width="150" Margin="0,0,10,0"
-                                               Background="#666666" Foreground="White" BorderThickness="0"
-                                               Padding="16,8" Cursor="Hand"/>
+                                                Background="#666666" Foreground="White" BorderThickness="0"
+                                                Padding="16,8" Cursor="Hand"/>
                                         <Button x:Name="ChangeRulesButton" Content="Change Rules" Width="150"
-                                               Click="ChangeRulesButton_Click"
-                                               Background="#666666" Foreground="White" BorderThickness="0"
-                                               Padding="16,8" Cursor="Hand"/>
+                                                Click="ChangeRulesButton_Click"
+                                                Background="#666666" Foreground="White" BorderThickness="0"
+                                                Padding="16,8" Cursor="Hand"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -300,17 +300,24 @@
                 <Grid x:Name="SettingsPage" Visibility="Collapsed">
                     <StackPanel Margin="40,30,40,40">
                         <TextBlock Text="Settings" FontSize="28" FontWeight="Bold" 
-                                  Margin="0,0,0,30" Foreground="#333333"/>
+                                   Margin="0,0,0,30" Foreground="#333333"/>
 
+                        <!-- The main StackPanel for settings content. The parent ScrollViewer will handle scrolling. -->
                         <StackPanel>
-                            <!-- Real-time Protection -->
+                            <!-- MERGED: Real-time Protection -->
                             <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
                                 <StackPanel>
                                     <TextBlock Text="Real-time Protection" FontSize="18" FontWeight="SemiBold" Foreground="#333333"/>
-                                    <TextBlock Text="Automatically scan files as they are accessed" 
-                                              FontSize="14" Margin="0,5,0,15" Foreground="#666666"/>
+                                    <TextBlock Text="Enable automatic scanning and configure a folder to monitor for changes." 
+                                               FontSize="14" Margin="0,5,0,15" Foreground="#666666" TextWrapping="Wrap"/>
+
                                     <CheckBox Content="Enable real-time protection" IsChecked="True" 
-                                             Foreground="#333333" FontSize="14"/>
+                                              Foreground="#333333" FontSize="14" Margin="0,0,0,20"/>
+
+                                    <TextBlock Text="Monitored Path:" FontSize="12" FontWeight="Normal" Foreground="#444444"/>
+                                    <TextBlock x:Name="CurrentMonitoringPathText" Text="Not configured" FontSize="12" FontFamily="Consolas, Monaco, monospace" Foreground="#0078D4" Margin="0,2,0,15" TextWrapping="Wrap"/>
+                                    <Button x:Name="ChangeMonitoringPathButton" Content="Change Path" Width="150" HorizontalAlignment="Left"
+                                            Style="{StaticResource AccentButtonStyle}" Click="ChangeMonitoringPathButton_Click"/>
                                 </StackPanel>
                             </Border>
 
@@ -319,7 +326,7 @@
                                 <StackPanel>
                                     <TextBlock Text="YARA Rules Configuration" FontSize="18" FontWeight="SemiBold" Foreground="#333333"/>
                                     <TextBlock Text="Configure YARA rules for malware detection" 
-                                              FontSize="14" Margin="0,5,0,15" Foreground="#666666"/>
+                                               FontSize="14" Margin="0,5,0,15" Foreground="#666666"/>
                                     <StackPanel Orientation="Horizontal">
                                         <Button Content="Update Rules" Width="120" Margin="0,0,10,0"
                                                Style="{StaticResource AccentButtonStyle}"/>
@@ -338,7 +345,7 @@
                                 <StackPanel>
                                     <TextBlock Text="Scheduled Scans" FontSize="18" FontWeight="SemiBold" Foreground="#333333"/>
                                     <TextBlock Text="Automatically run scans at specified times" 
-                                              FontSize="14" Margin="0,5,0,15" Foreground="#666666"/>
+                                               FontSize="14" Margin="0,5,0,15" Foreground="#666666"/>
                                     <CheckBox Content="Enable scheduled scans" Foreground="#333333" FontSize="14"/>
                                     <StackPanel Margin="0,10,0,0">
                                         <TextBlock Text="Frequency:" FontSize="14" Foreground="#333333" Margin="0,0,0,5"/>
@@ -356,7 +363,7 @@
                                 <StackPanel>
                                     <TextBlock Text="Quarantine" FontSize="18" FontWeight="SemiBold" Foreground="#333333"/>
                                     <TextBlock Text="Manage quarantined files" 
-                                              FontSize="14" Margin="0,5,0,15" Foreground="#666666"/>
+                                               FontSize="14" Margin="0,5,0,15" Foreground="#666666"/>
                                     <StackPanel Orientation="Horizontal">
                                         <Button Content="View Quarantine" Width="150" Margin="0,0,10,0"
                                                Background="#666666" Foreground="White" BorderThickness="0"
@@ -391,19 +398,19 @@
                                 <StackPanel>
                                     <TextBlock Text="System Logs" FontSize="16" FontWeight="SemiBold" Foreground="White"/>
                                     <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                         
+
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
 
                             <!-- Main Logs TextBox -->
                             <TextBox x:Name="LogsTextBox" Grid.Row="1" 
-                                    Style="{StaticResource LogTextBoxStyle}"
-                                    Text="[INFO] N.A.Z.A.R.I.C.K. Protocol&#x0A;"
-                                    Margin="0"
-                                    MinHeight="550"
-                                    MaxHeight="550"
-                                    VerticalScrollBarVisibility="Auto"/>
+                                     Style="{StaticResource LogTextBoxStyle}"
+                                     Text="[INFO] N.A.Z.A.R.I.C.K. Protocol&#x0A;"
+                                     Margin="0"
+                                     MinHeight="550"
+                                     MaxHeight="550"
+                                     VerticalScrollBarVisibility="Auto"/>
                         </Grid>
                     </Border>
 
@@ -427,7 +434,7 @@
                                     <StackPanel Margin="0,0,0,15">
                                         <TextBlock Text="CPU Usage" FontSize="12" FontWeight="SemiBold" Foreground="#333333"/>
                                         <ProgressBar x:Name="CpuUsageBar" Height="15" Margin="0,2,0,0" 
-                                                    Background="#E0E0E0" Foreground="#0078D4" Value="25"/>
+                                                     Background="#E0E0E0" Foreground="#0078D4" Value="25"/>
                                         <TextBlock x:Name="CpuUsageText" Text="25%" FontSize="10" Foreground="#666666" HorizontalAlignment="Right"/>
                                     </StackPanel>
 
@@ -435,7 +442,7 @@
                                     <StackPanel Margin="0,0,0,15">
                                         <TextBlock Text="Memory Usage" FontSize="12" FontWeight="SemiBold" Foreground="#333333"/>
                                         <ProgressBar x:Name="MemoryUsageBar" Height="15" Margin="0,2,0,0" 
-                                                    Background="#E0E0E0" Foreground="#FF6B00" Value="60"/>
+                                                     Background="#E0E0E0" Foreground="#FF6B00" Value="60"/>
                                         <TextBlock x:Name="MemoryUsageText" Text="60%" FontSize="10" Foreground="#666666" HorizontalAlignment="Right"/>
                                     </StackPanel>
 
@@ -455,7 +462,7 @@
                                     <StackPanel Margin="0,0,0,15">
                                         <TextBlock Text="Last Rules Update" FontSize="12" FontWeight="SemiBold" Foreground="#333333"/>
                                         <TextBlock x:Name="LastUpdateText" Text="Never" FontSize="10" Foreground="#666666"/>
-                                    </StackPanel>                                    
+                                    </StackPanel>
                                 </StackPanel>
                             </ScrollViewer>
                         </Grid>
@@ -467,21 +474,21 @@
                     <StackPanel Margin="40,30,40,40" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <TextBlock Text="🛡️" FontSize="64" HorizontalAlignment="Center" Margin="0,0,0,20"/>
                         <TextBlock Text="N.A.Z.A.R.I.C.K." FontSize="24" FontWeight="Bold" 
-                                  HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="#333333"/>
+                                   HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="#333333"/>
                         <TextBlock Text="Version 1.0.0" FontSize="16" 
-                                  HorizontalAlignment="Center" Margin="0,0,0,20" Foreground="#666666"/>
+                                   HorizontalAlignment="Center" Margin="0,0,0,20" Foreground="#666666"/>
 
                         <Border Style="{StaticResource CardStyle}" MaxWidth="500">
                             <StackPanel>
                                 <TextBlock Text="About N.A.Z.A.R.I.C.K. Protocol" FontSize="18" FontWeight="SemiBold" 
-                                          HorizontalAlignment="Center" Foreground="#333333" Margin="0,0,0,15"/>
+                                           HorizontalAlignment="Center" Foreground="#333333" Margin="0,0,0,15"/>
                                 <TextBlock Text="Nefarious Anomaly Zone And Rogue Infection-analysis Countermeasure Kit Protocol. A comprehensive antivirus solution designed to protect your computer from malware, viruses, and other security threats using advanced YARA rule-based detection."
-                                          TextWrapping="Wrap" TextAlignment="Center" FontSize="14"
-                                          Foreground="#666666" Margin="0,0,0,20"/>
+                                           TextWrapping="Wrap" TextAlignment="Center" FontSize="14"
+                                           Foreground="#666666" Margin="0,0,0,20"/>
 
                                 <StackPanel Margin="0,0,0,20">
                                     <TextBlock Text="Features:" FontWeight="SemiBold" HorizontalAlignment="Center" 
-                                              Foreground="#333333" Margin="0,0,0,10"/>
+                                               Foreground="#333333" Margin="0,0,0,10"/>
                                     <TextBlock Text="• YARA rule-based malware detection" HorizontalAlignment="Center" Foreground="#666666"/>
                                     <TextBlock Text="• Real-time protection" HorizontalAlignment="Center" Foreground="#666666"/>
                                     <TextBlock Text="• Comprehensive logging system" HorizontalAlignment="Center" Foreground="#666666"/>
@@ -490,7 +497,7 @@
                                 </StackPanel>
 
                                 <Button Content="Check for Updates" HorizontalAlignment="Center" 
-                                       Style="{StaticResource AccentButtonStyle}"/>
+                                        Style="{StaticResource AccentButtonStyle}"/>
                             </StackPanel>
                         </Border>
                     </StackPanel>
