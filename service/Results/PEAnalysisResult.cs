@@ -22,7 +22,7 @@ namespace NAZARICK_Protocol.service.Results
         }
 
         /// <summary>
-        /// Creates a formatted, human-readable report of the analysis.
+        /// Returns a formatted, human-readable report of the analysis.
         /// </summary>
         public override string ToString()
         {
