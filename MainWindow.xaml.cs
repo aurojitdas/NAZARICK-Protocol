@@ -1,6 +1,8 @@
 ﻿using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using NAZARICK_Protocol.service;
+using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,7 +14,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-using System.IO;
 
 namespace NAZARICK_Protocol
 {
@@ -25,6 +26,7 @@ namespace NAZARICK_Protocol
         private DispatcherTimer systemTimer;
         private int filesScannedToday = 0;
         private int threatsBlockedToday = 0;
+        private RealTimeMonitor _monitor;
 
         public MainWindow()
         {
@@ -41,9 +43,12 @@ namespace NAZARICK_Protocol
             LogMessage("[INFO] N.A.Z.A.R.I.C.K. Protocol starting...");
             LogMessage("[INFO] Initializing YARA engine...");
 
+            
+
+
             string yaraResult = pw.initialize_YARA();
             LogMessage($"[INFO] {yaraResult}");
-
+            initalizeRealTimeMonitor();
             // Update UI elements           
             LastUpdateText.Text = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
 
@@ -247,6 +252,58 @@ namespace NAZARICK_Protocol
 
             LogMessage("[INFO] Application shutdown complete");
             Application.Current.Shutdown();
+        }
+
+
+        public void initalizeRealTimeMonitor()
+        {
+            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            string watchPath = System.IO.Path.Combine(desktopPath, "TestFolder");
+
+            // Directory Check before starting.
+            if (!Directory.Exists(watchPath))
+            {
+                try
+                {
+                    Directory.CreateDirectory(watchPath);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error creating directory: {ex.Message}");
+                    return;
+                }
+            }
+
+            // --- INITIALIZE AND START THE MONITOR ---
+            try
+            {
+                _monitor = new RealTimeMonitor(watchPath);
+
+                // --- SUBSCRIBE TO THE EVENT ---
+                // The 'Monitor_FileChanged' method will be called whenever a file is
+                // created, changed, or renamed in the monitored folder.
+                _monitor.FileChanged += Monitor_FileChanged;
+
+                // --- START MONITORING ---
+                _monitor.Start();
+                
+                Debug.WriteLine($"Monitoring started on: {watchPath}");
+
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show($"Error initializing monitor: {ex.Message}");
+            }
+
+        }
+
+        private void Monitor_FileChanged(string filePath)
+        {
+            // This event handler is executed on a background thread from the FileSystemWatcher.            
+             this.Dispatcher.Invoke(() => 
+            {
+                LogMessage($"File changed: {filePath}");
+            });                    
         }
     }
 }
