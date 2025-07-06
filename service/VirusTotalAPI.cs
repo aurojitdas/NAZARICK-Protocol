@@ -59,7 +59,7 @@ namespace NAZARICK_Protocol.service
         /// </summary>
         /// <param name="jsonResponse">The raw JSON string from the CheckFileHash method.</param>
         /// <returns>A VirusTotalFileAnalysis object with all details, or null if parsing fails.</returns>
-        public VirusTotalFileAnalysis? ParseFileAnalysis(string jsonResponse)
+        public VirusTotalFileAnalysisResults? ParseFileAnalysis(string jsonResponse)
         {
             if (string.IsNullOrEmpty(jsonResponse))
             {
@@ -74,7 +74,7 @@ namespace NAZARICK_Protocol.service
                 JsonElement attributes = data.GetProperty("attributes");
                 JsonElement stats = attributes.GetProperty("last_analysis_stats");
 
-                var analysis = new VirusTotalFileAnalysis
+                var analysis = new VirusTotalFileAnalysisResults
                 {
                     // Scan statistics
                     MaliciousDetections = stats.GetProperty("malicious").GetInt32(),

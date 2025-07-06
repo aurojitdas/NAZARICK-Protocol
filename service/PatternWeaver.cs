@@ -120,25 +120,25 @@ namespace NAZARICK_Protocol.service
                 }
 
                 mainWindow.LogMessage("Scanning !!...");
-                //string response = await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
-                //if (!string.IsNullOrEmpty(response)) {
-                //    mainWindow.LogMessage(response);
-                // }
-                //VirusTotalFileAnalysis? op = vt.ParseFileAnalysis(response);
-
+                string response = await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
+                if (!string.IsNullOrEmpty(response)) {
+                    mainWindow.LogMessage(response);
+                 }
+                VirusTotalFileAnalysisResults? op = vt.ParseFileAnalysis(response);
+                ShowVirusTotalAnalysisResults(op);
                 // mainWindow.LogMessage(op.MeaningfulName);
                 // mainWindow.LogMessage(op.IsMalicious.ToString());
                 // mainWindow.LogMessage(op.MaliciousDetections.ToString());
                 // mainWindow.LogMessage(op.ThreatLabel);
 
-                PEAnalysisResult pr = Pe.Analyze(file_path);
-                ShowPEAnalysisResults(pr);
+                //PEAnalysisResult pr = Pe.Analyze(file_path);
+                //ShowPEAnalysisResults(pr);
 
                 currentScanWindow.UpdateCurrentFile(file_path);
                 scanResults = scanner.ScanFile(file_path, rules);
                 currentScanWindow.AddFilesScanned();
                 mainWindow.LogMessage("Scan SUCCESS!!...");
-                mainWindow.LogMessage(pr.ToString());
+                //mainWindow.LogMessage(pr.ToString());
                 currentScanWindow.CompleteScan();
                 displayScanResults(scanResults, file_path);
 
@@ -222,7 +222,10 @@ namespace NAZARICK_Protocol.service
         {
             PEAnalysisResultsWindow.ShowAnalysisResults(analysisResult, this.mainWindow);
         }
-        
+        private void ShowVirusTotalAnalysisResults(VirusTotalFileAnalysisResults analysisResult)
+        {
+            VirusTotalResultsWindow.ShowAnalysisResults(analysisResult, this.mainWindow);
+        }
     }
 
 }

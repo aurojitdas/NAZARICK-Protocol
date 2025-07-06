@@ -16,4 +16,8 @@
     <PackageReference Include="PeNet" Version="5.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Windows\" />
+  </ItemGroup>
+
 </Project>
