@@ -8,7 +8,7 @@ using System.Text;
 
 namespace NAZARICK_Protocol.service.Results
 {
-    internal class PEAnalysisResult
+    public class PEAnalysisResult
     {
         public string FilePath { get; }
         public bool IsValidPeFile { get; set; } = false;
@@ -75,5 +75,3 @@ namespace NAZARICK_Protocol.service.Results
         }
     }
 }
-
-
