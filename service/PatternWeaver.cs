@@ -1,6 +1,7 @@
 ﻿using dnYara;
 using dnYara.Interop;
 using NAZARICK_Protocol.service.Results;
+using NAZARICK_Protocol.UI;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -122,13 +123,17 @@ namespace NAZARICK_Protocol.service
                 //string response = await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
                 //if (!string.IsNullOrEmpty(response)) {
                 //    mainWindow.LogMessage(response);
-               // }
+                // }
                 //VirusTotalFileAnalysis? op = vt.ParseFileAnalysis(response);
+
+                // mainWindow.LogMessage(op.MeaningfulName);
+                // mainWindow.LogMessage(op.IsMalicious.ToString());
+                // mainWindow.LogMessage(op.MaliciousDetections.ToString());
+                // mainWindow.LogMessage(op.ThreatLabel);
+
                 PEAnalysisResult pr = Pe.Analyze(file_path);
-               // mainWindow.LogMessage(op.MeaningfulName);
-               // mainWindow.LogMessage(op.IsMalicious.ToString());
-               // mainWindow.LogMessage(op.MaliciousDetections.ToString());
-               // mainWindow.LogMessage(op.ThreatLabel);
+                ShowPEAnalysisResults(pr);
+
                 currentScanWindow.UpdateCurrentFile(file_path);
                 scanResults = scanner.ScanFile(file_path, rules);
                 currentScanWindow.AddFilesScanned();
@@ -213,6 +218,11 @@ namespace NAZARICK_Protocol.service
             currentScanWindow.StartScan();
         }
 
+        private void ShowPEAnalysisResults(PEAnalysisResult analysisResult)
+        {
+            PEAnalysisResultsWindow.ShowAnalysisResults(analysisResult, this.mainWindow);
+        }
+        
     }
 
 }
