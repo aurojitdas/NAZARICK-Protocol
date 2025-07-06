@@ -48,7 +48,7 @@ namespace NAZARICK_Protocol.service
                 EnableRaisingEvents = true
             };
 
-            // All events (Created, Changed, Renamed) will trigger a scan.
+            // All events (Created, Changed, Renamed) will trigger a method.
             _watcher.Created += OnFileEvent;
             _watcher.Changed += OnFileEvent;
             _watcher.Renamed += OnFileRenamed;
