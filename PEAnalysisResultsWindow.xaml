@@ -1,5 +1,4 @@
-﻿<!-- PEAnalysisResultsWindow.xaml -->
-<Window x:Class="NAZARICK_Protocol.UI.PEAnalysisResultsWindow"
+﻿<Window x:Class="NAZARICK_Protocol.UI.PEAnalysisResultsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="N.A.Z.A.R.I.C.K. Protocol - PE Analysis Results" 

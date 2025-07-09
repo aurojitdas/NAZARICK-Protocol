@@ -242,7 +242,7 @@ namespace NAZARICK_Protocol.service
         /// <summary>
         /// Parses a raw JSON response into a complete file analysis object.
         /// </summary>
-        /// <param name="jsonResponse">The raw JSON string from the CheckFileHash method.</param>
+        /// <param name="jsonResponse">The raw JSON string</param>
         /// <returns>A VirusTotalFileAnalysis object with all details, or null if parsing fails.</returns>
         public VirusTotalFileAnalysisResults? ParseFileAnalysis(string jsonResponse)
         {
@@ -257,7 +257,27 @@ namespace NAZARICK_Protocol.service
                 JsonElement root = doc.RootElement;
                 JsonElement data = root.GetProperty("data");
                 JsonElement attributes = data.GetProperty("attributes");
-                JsonElement stats = attributes.GetProperty("last_analysis_stats");
+
+                // Check if analysis response from upload or response from hash lookup
+                bool isAnalysisResponse = data.GetProperty("type").GetString() == "analysis";
+
+                JsonElement stats;
+                JsonElement fileInfo;
+
+                if (isAnalysisResponse)
+                {
+                    //For upload analysis
+                    stats = attributes.GetProperty("stats");
+                    // Get File info
+                    fileInfo = root.GetProperty("meta").GetProperty("file_info");
+                }
+                else
+                {
+                    // For hash lookup responses
+                    //get last analysis stats
+                    stats = attributes.GetProperty("last_analysis_stats");
+                    fileInfo = attributes;
+                }
 
                 var analysis = new VirusTotalFileAnalysisResults
                 {
@@ -268,26 +288,29 @@ namespace NAZARICK_Protocol.service
 
                     // File attributes
                     MeaningfulName = attributes.TryGetProperty("meaningful_name", out var name) ? name.GetString() : "N/A",
-                    Sha256 = attributes.TryGetProperty("sha256", out var sha256) ? sha256.GetString() : "N/A",
-                    Md5 = attributes.TryGetProperty("md5", out var md5) ? md5.GetString() : "N/A",
-                    FileSize = attributes.TryGetProperty("size", out var size) ? size.GetInt64() : 0,
-                    Permalink = data.GetProperty("links").GetProperty("self").GetString(),
+                    Sha256 = fileInfo.TryGetProperty("sha256", out var sha256) ? sha256.GetString() : "N/A",
+                    Md5 = fileInfo.TryGetProperty("md5", out var md5) ? md5.GetString() : "N/A",
+                    FileSize = fileInfo.TryGetProperty("size", out var size) ? size.GetInt64() : 0,
+                    Permalink = data.TryGetProperty("links", out var links) && links.TryGetProperty("self", out var self)
+                               ? self.GetString() : "N/A",
 
                     // Convert Unix timestamp to DateTime
-                    LastAnalysisDate = attributes.TryGetProperty("last_analysis_date", out var date) && date.TryGetInt64(out long unixTime)
-                                        ? DateTimeOffset.FromUnixTimeSeconds(unixTime).DateTime
+                    LastAnalysisDate = isAnalysisResponse && attributes.TryGetProperty("date", out var analysisDate) && analysisDate.TryGetInt64(out long unixTime1)
+                                        ? DateTimeOffset.FromUnixTimeSeconds(unixTime1).DateTime
+                                        : attributes.TryGetProperty("last_analysis_date", out var date) && date.TryGetInt64(out long unixTime2)
+                                        ? DateTimeOffset.FromUnixTimeSeconds(unixTime2).DateTime
                                         : DateTime.MinValue
                 };
 
-                // Calculated properties
+                // Calculate properties
                 analysis.IsMalicious = analysis.MaliciousDetections > 0;
                 analysis.TotalScans = analysis.MaliciousDetections +
                                       analysis.SuspiciousDetections +
                                       analysis.UndetectedCount +
                                       stats.GetProperty("harmless").GetInt32() +
-                                      stats.GetProperty("timeout").GetInt32();
+                                      (stats.TryGetProperty("timeout", out var timeout) ? timeout.GetInt32() : 0);
 
-                // gets the common threat name, if available
+                // gets the common threat name
                 if (attributes.TryGetProperty("popular_threat_classification", out var threatClassification) &&
                     threatClassification.TryGetProperty("suggested_threat_label", out var threatLabelElement))
                 {
@@ -310,6 +333,11 @@ namespace NAZARICK_Protocol.service
                 _mw.LogMessage($"Could not find an expected key in JSON response: {e.Message}");
                 return null;
             }
+        }
+
+        public void Dispose()
+        {
+            _httpClient?.Dispose();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using dnYara;
 using dnYara.Interop;
+using MS.WindowsAPICodePack.Internal;
 using NAZARICK_Protocol.service.Results;
 using NAZARICK_Protocol.UI;
 using System;
@@ -120,12 +121,16 @@ namespace NAZARICK_Protocol.service
                 }
 
                 mainWindow.LogMessage("Scanning !!...");
-                string response = await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
+                string response = //await vt.UploadAndAnalyzeFile(file_path);
+                await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
                 if (!string.IsNullOrEmpty(response)) {
                     mainWindow.LogMessage(response);
                  }
                 VirusTotalFileAnalysisResults? op = vt.ParseFileAnalysis(response);
                 ShowVirusTotalAnalysisResults(op);
+               
+
+
                 // mainWindow.LogMessage(op.MeaningfulName);
                 // mainWindow.LogMessage(op.IsMalicious.ToString());
                 // mainWindow.LogMessage(op.MaliciousDetections.ToString());
