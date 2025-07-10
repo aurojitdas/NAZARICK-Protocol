@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using NAZARICK_Protocol.service;
+using PeNet.Header.Resource;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -175,7 +176,7 @@ namespace NAZARICK_Protocol
         {
             LogMessage("[INFO] Opening rules folder selection dialog...");
 
-            String rulesFolder = rulesFolderSelect();
+            String rulesFolder = FolderSelect("Select YARA Rules Folder");
             if (rulesFolder != null)
             {
                 LogMessage($"[INFO] Rules folder selected: {rulesFolder}");
@@ -218,12 +219,12 @@ namespace NAZARICK_Protocol
             return file_Path;
         }
 
-        public String rulesFolderSelect()
+        public String FolderSelect(String message)
         {
             String? folder_Path = null;
             CommonOpenFileDialog dialog = new CommonOpenFileDialog();
             dialog.IsFolderPicker = true;
-            dialog.Title = "Select YARA Rules Folder";
+            dialog.Title = message;
 
             CommonFileDialogResult result = dialog.ShowDialog();
             if (result == CommonFileDialogResult.Ok)
@@ -348,6 +349,71 @@ namespace NAZARICK_Protocol
                 LogMessage("[INFO] Monitoring path selection cancelled.");
             }
         }
+
+        private void ScanFolderButton_Click(object sender, RoutedEventArgs e)
+        {
+           String folderpath= FolderSelect("Select Folder to Scan");
+            List<string> files = GetAllFilesInDirectory(folderpath);
+            LogMessage("Folder Selected: Files: ");
+            foreach (string file  in files)
+            {
+               
+                LogMessage(file);
+                
+            }
+            _ = pw.scanFiles(files);
+
+
+        }
+
+
+        /// <summary>
+        /// Retrieves a list of all file paths within a specified directory and its subdirectories.
+        /// </summary>
+        /// <param name="directoryPath">The absolute path to the directory to search.</param>
+        /// <returns>A List of strings containing the full paths of all files found. Returns an empty list if an error occurs.</returns>
+        public List<string> GetAllFilesInDirectory(string directoryPath)
+        {
+            var filePaths = new List<string>();
+
+            // Check if the directory path is valid before proceeding.
+            if (string.IsNullOrEmpty(directoryPath) || !Directory.Exists(directoryPath))
+            {
+                MessageBox.Show("The specified directory does not exist or the path is invalid.",
+                                "Invalid Directory",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+                return filePaths; // Return an empty list
+            }
+
+            try
+            {
+                // Search the directory and its subdirectories for files
+                string[] files = Directory.GetFiles(directoryPath, "*.*", SearchOption.AllDirectories);
+
+                // Add the file paths to the list
+                filePaths.AddRange(files);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                //  application does not have permission to access a folder.
+                MessageBox.Show($"Access denied. You do not have permission to access the directory or one of its subdirectories: {directoryPath}",
+                                "Permission Error",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+            }
+            catch (Exception ex)
+            {
+                //  exceptions during file enumeration.
+                MessageBox.Show($"An unexpected error occurred while accessing the directory: {ex.Message}",
+                                "Error",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+            }
+
+            return filePaths;
+        }
+
 
     }
 }

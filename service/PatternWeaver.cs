@@ -155,6 +155,37 @@ namespace NAZARICK_Protocol.service
                 
         }
 
+        public async Task scanFiles(List<String> files)
+        {
+            ShowScanWindow();
+            List<ScanResult> scanResults =null;
+            if (files != null)
+            {
+                if (scanner != null) { }
+                else
+                {
+                    scanner = new Scanner();
+                }
+                mainWindow.LogMessage("Scanning !!...");
+                foreach (string file in files)
+                {
+                    currentScanWindow.UpdateCurrentFile(file);
+                    scanResults = scanner.ScanFile(file, rules);
+                    currentScanWindow.AddFilesScanned();
+                    displayScanResults(scanResults, file);
+                }
+                currentScanWindow.CompleteScan();              
+                mainWindow.LogMessage("Scan SUCCESS!!...");               
+               
+
+            }
+            else
+            {
+                mainWindow.LogMessage("Scan Cancelled!!...");
+            }
+
+        }
+
         public void cleanup()
         {
             mainWindow.LogMessage("Cleaning up YARA resources...\n"); // For debugging
