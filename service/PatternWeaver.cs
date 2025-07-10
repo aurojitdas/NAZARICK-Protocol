@@ -23,6 +23,7 @@ namespace NAZARICK_Protocol.service
         private ScanWindow currentScanWindow;
         private VirusTotalAPI vt;
         PEAnalyzer Pe;
+        FileScanReport scanReport;
 
         public PatternWeaver(MainWindow mainWindow)
         {
@@ -172,6 +173,7 @@ namespace NAZARICK_Protocol.service
                     currentScanWindow.UpdateCurrentFile(file);
                     scanResults = scanner.ScanFile(file, rules);
                     currentScanWindow.AddFilesScanned();
+                    scanReport = new FileScanReport(file,scanResults);
                     displayScanResults(scanResults, file);
                 }
                 currentScanWindow.CompleteScan();              
@@ -229,7 +231,7 @@ namespace NAZARICK_Protocol.service
         {
             if (scanResults != null && scanResults.Count > 0)
             {
-                mainWindow.LogMessage($"\n--- THREATS DETECTED ---\n");
+                mainWindow.LogMessage($"--- THREATS DETECTED IN {Path.GetFileName(filepath)} ---\n");
                 foreach (var result in scanResults)
                 {
                     mainWindow.LogMessage($"Rule matched: {result.MatchingRule.Identifier}\n");
