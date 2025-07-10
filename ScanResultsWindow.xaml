@@ -6,19 +6,6 @@
         Background="#F5F5F5">
 
     <Window.Resources>
-        <!-- Card Style -->
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="20"/>
-            <Setter Property="Margin" Value="10"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect Color="Gray" Direction="270" ShadowDepth="2" Opacity="0.2" BlurRadius="8"/>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
         <!-- Standard Button Style -->
         <Style x:Key="StandardButtonStyle" TargetType="Button">
             <Setter Property="Template">
@@ -49,39 +36,171 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header Section -->
-        <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
-            <StackPanel Margin="30,20">
-                <TextBlock Text="Scan Results" FontSize="28" FontWeight="Bold" 
-                          Foreground="#333333" Margin="0,0,0,5"/>
-                <TextBlock x:Name="SummaryText" Text="Loading results..." FontSize="14" 
-                          Foreground="#666666"/>
-            </StackPanel>
-        </Border>
+        <!-- Title Section -->
+        <StackPanel Grid.Row="0" Margin="35,25,35,20">
+            <TextBlock Text="Scan Results" FontSize="28" FontWeight="Normal" 
+                      Foreground="#333333" Margin="0,0,0,5"/>
+            <TextBlock x:Name="SummaryText" Text="Loading results..." FontSize="14" 
+                      Foreground="#666666"/>
+        </StackPanel>
 
-        <!-- Results Section -->
-        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="20">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <ListView x:Name="ResultsListView" BorderThickness="0">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="File Path" Width="400" DisplayMemberBinding="{Binding FilePath}"/>
-                            <GridViewColumn Header="Status" Width="100" DisplayMemberBinding="{Binding StatusText}"/>
-                            <GridViewColumn Header="Rules Matched" Width="120" DisplayMemberBinding="{Binding MatchedRulesCount}"/>
-                            <GridViewColumn Header="Detected Threats" Width="350" DisplayMemberBinding="{Binding ThreatsList}"/>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-            </ScrollViewer>
+        <!-- Summary Cards Section -->
+        <Grid Grid.Row="1" Margin="35,0,35,20">
+            <Border Background="White" CornerRadius="8" Padding="20" 
+                   BorderThickness="1" BorderBrush="#E0E0E0">
+                <Border.Effect>
+                    <DropShadowEffect Color="Gray" Direction="270" ShadowDepth="1" Opacity="0.1" BlurRadius="3"/>
+                </Border.Effect>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Total Files -->
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                        <TextBlock x:Name="TotalFilesCount" Text="0" FontSize="24" FontWeight="Bold" 
+                                  Foreground="#333333" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Total Files" FontSize="12" Foreground="#666666" 
+                                  HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Clean Files -->
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                        <TextBlock x:Name="CleanFilesCount" Text="0" FontSize="24" FontWeight="Bold" 
+                                  Foreground="#28a745" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Clean" FontSize="12" Foreground="#666666" 
+                                  HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Threat Files -->
+                    <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                        <TextBlock x:Name="ThreatFilesCount" Text="0" FontSize="24" FontWeight="Bold" 
+                                  Foreground="#dc3545" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Threats" FontSize="12" Foreground="#666666" 
+                                  HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Total Rules Matched -->
+                    <StackPanel Grid.Column="3" HorizontalAlignment="Center">
+                        <TextBlock x:Name="TotalRulesCount" Text="0" FontSize="24" FontWeight="Bold" 
+                                  Foreground="#333333" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Total Rules Matched" FontSize="12" Foreground="#666666" 
+                                  HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Results Table Section -->
+        <Border Grid.Row="2" Background="White" CornerRadius="8" Margin="35,0,35,20" 
+               BorderThickness="1" BorderBrush="#E0E0E0">
+            <Border.Effect>
+                <DropShadowEffect Color="Gray" Direction="270" ShadowDepth="1" Opacity="0.1" BlurRadius="3"/>
+            </Border.Effect>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Table Header -->
+                <Border Grid.Row="0" Background="#F8F9FA" CornerRadius="8,8,0,0" 
+                       BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                    <Grid Height="40">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="400"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="File Path" FontWeight="SemiBold" 
+                                  VerticalAlignment="Center" Margin="15,0,0,0" FontSize="13"/>
+                        <TextBlock Grid.Column="1" Text="Status" FontWeight="SemiBold" 
+                                  VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="13"/>
+                        <TextBlock Grid.Column="2" Text="Rules Matched" FontWeight="SemiBold" 
+                                  VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="13"/>
+                        <TextBlock Grid.Column="3" Text="Detected Threats" FontWeight="SemiBold" 
+                                  VerticalAlignment="Center" Margin="15,0,0,0" FontSize="13"/>
+                    </Grid>
+                </Border>
+
+                <!-- Table Content -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Padding="0">
+                    <ListView x:Name="ResultsListView" BorderThickness="0" Background="Transparent">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Margin" Value="0"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListViewItem">
+                                            <Border Background="{TemplateBinding Background}" 
+                                                   BorderBrush="#F0F0F0" BorderThickness="0,0,0,1"
+                                                   Padding="0,10" MinWidth="820">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="400"/>
+                                                        <ColumnDefinition Width="100"/>
+                                                        <ColumnDefinition Width="120"/>
+                                                        <ColumnDefinition Width="*" MinWidth="200"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBlock Grid.Column="0" Text="{Binding FilePath}" 
+                                                              VerticalAlignment="Center" Margin="15,0,10,0" 
+                                                              TextTrimming="CharacterEllipsis" FontSize="13"
+                                                              ToolTip="{Binding FilePath}"/>
+
+                                                    <Border Grid.Column="1" Background="{Binding StatusBackground}" 
+                                                           CornerRadius="12" Height="24" Width="60"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding StatusText}" 
+                                                                  Foreground="{Binding StatusForeground}"
+                                                                  FontSize="11" FontWeight="SemiBold"
+                                                                  HorizontalAlignment="Center" 
+                                                                  VerticalAlignment="Center"/>
+                                                    </Border>
+
+                                                    <TextBlock Grid.Column="2" Text="{Binding MatchedRulesCount}" 
+                                                              VerticalAlignment="Center" FontSize="13"
+                                                              HorizontalAlignment="Center"/>
+
+                                                    <TextBlock Grid.Column="3" Text="{Binding ThreatsList}" 
+                                                              VerticalAlignment="Center" Margin="15,0,15,0"
+                                                              TextWrapping="Wrap" FontSize="13"
+                                                              ToolTip="{Binding ThreatsList}"/>
+                                                </Grid>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#F8F9FA"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                    </ListView>
+                </ScrollViewer>
+            </Grid>
         </Border>
 
         <!-- Action Buttons -->
-        <Border Grid.Row="2" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="30,15">
+        <Border Grid.Row="3" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="35,15">
                 <Button x:Name="CloseButton" Content="Close" Width="100" Height="35" 
                        Background="#0078D4" Foreground="White" BorderThickness="0"
                        Style="{StaticResource StandardButtonStyle}"

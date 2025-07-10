@@ -127,8 +127,8 @@ namespace NAZARICK_Protocol.service
                 if (!string.IsNullOrEmpty(response)) {
                     mainWindow.LogMessage(response);
                  }
-                VirusTotalFileAnalysisResults? op = vt.ParseFileAnalysis(response);
-                ShowVirusTotalAnalysisResults(op);
+                //VirusTotalFileAnalysisResults? op = vt.ParseFileAnalysis(response);
+                //ShowVirusTotalAnalysisResults(op);
                
 
 
