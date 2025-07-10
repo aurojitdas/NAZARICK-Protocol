@@ -143,6 +143,11 @@ namespace NAZARICK_Protocol.service
                 currentScanWindow.UpdateCurrentFile(file_path);
                 scanResults = scanner.ScanFile(file_path, rules);
                 currentScanWindow.AddFilesScanned();
+
+                // Create scan report and add to scan window
+                FileScanReport scanReport = new FileScanReport(file_path, scanResults);
+                currentScanWindow.AddScanResult(scanReport);
+
                 mainWindow.LogMessage("Scan SUCCESS!!...");
                 //mainWindow.LogMessage(pr.ToString());
                 currentScanWindow.CompleteScan();
@@ -174,6 +179,7 @@ namespace NAZARICK_Protocol.service
                     scanResults = scanner.ScanFile(file, rules);
                     currentScanWindow.AddFilesScanned();
                     scanReport = new FileScanReport(file,scanResults);
+                    currentScanWindow.AddScanResult(scanReport);
                     displayScanResults(scanResults, file);
                 }
                 currentScanWindow.CompleteScan();              

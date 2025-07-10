@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Threading;
+using NAZARICK_Protocol.service.Results;
 
 namespace NAZARICK_Protocol
 {
@@ -11,6 +13,9 @@ namespace NAZARICK_Protocol
         private int foldersScanned = 0;
         private long dataSizeScanned = 0;
         private int infectedFiles = 0;
+
+        // Store scan results
+        private List<FileScanReport> scanResults = new List<FileScanReport>();
 
         // Expandable sections state
         private bool itemsDetailsExpanded = true;
@@ -46,6 +51,10 @@ namespace NAZARICK_Protocol
                 ScanStatusText.Text = "Scanning for threats...";
                 ScanProgressBar.IsIndeterminate = true;
                 StopButton.Content = "Stop Scan";
+
+                // Clear previous results
+                scanResults.Clear();
+                ShowResultsButton.Visibility = Visibility.Collapsed;
             });
         }
 
@@ -128,6 +137,24 @@ namespace NAZARICK_Protocol
         }
 
         /// <summary>
+        /// Add a scan result to the results list
+        /// </summary>
+        /// <param name="scanReport">FileScanReport to add</param>
+        public void AddScanResult(FileScanReport scanReport)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                scanResults.Add(scanReport);
+
+                // Show results button if we have results
+                if (scanResults.Count > 0)
+                {
+                    ShowResultsButton.Visibility = Visibility.Visible;
+                }
+            });
+        }
+
+        /// <summary>
         /// Update scan progress (0-100)
         /// </summary>
         /// <param name="percentage">Progress percentage (0-100)</param>
@@ -172,9 +199,6 @@ namespace NAZARICK_Protocol
 
                 // Update button state
                 StopButton.Content = "Close";
-
-                // Show completion summary
-                //ShowScanSummary();
             });
         }
 
@@ -204,6 +228,8 @@ namespace NAZARICK_Protocol
                 foldersScanned = 0;
                 dataSizeScanned = 0;
                 infectedFiles = 0;
+                scanResults.Clear();
+                ShowResultsButton.Visibility = Visibility.Collapsed;
 
                 UpdateScanCounts();
             });
@@ -260,18 +286,6 @@ namespace NAZARICK_Protocol
             ItemsDetailsPanel.Visibility = itemsDetailsExpanded ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private void ShowScanSummary()
-        {
-            string summary = $"Scan completed!\n\n" +
-                           $"Files scanned: {filesScanned:N0}\n" +
-                           $"Folders scanned: {foldersScanned:N0}\n" +
-                           $"Data scanned: {FormatBytes(dataSizeScanned)}\n" +
-                           $"Threats detected: {infectedFiles}";
-
-            MessageBox.Show(summary, "Scan Complete", MessageBoxButton.OK,
-                          infectedFiles > 0 ? MessageBoxImage.Warning : MessageBoxImage.Information);
-        }
-
         #endregion
 
         #region Event Handlers
@@ -298,6 +312,14 @@ namespace NAZARICK_Protocol
         {
             itemsDetailsExpanded = !itemsDetailsExpanded;
             UpdateExpandableIcons();
+        }
+
+        private void ShowResultsButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Open the scan results window
+            var resultsWindow = new ScanResultsWindow(scanResults);
+            resultsWindow.Owner = this;
+            resultsWindow.ShowDialog();
         }
 
         private void StopButton_Click(object sender, RoutedEventArgs e)

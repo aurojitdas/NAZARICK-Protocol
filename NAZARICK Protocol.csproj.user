@@ -7,6 +7,9 @@
     <Compile Update="PEAnalysisResultsWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="ScanResultsWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="ScanWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
