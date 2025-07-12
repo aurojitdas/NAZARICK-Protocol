@@ -10,11 +10,13 @@ namespace NAZARICK_Protocol
     public partial class ScanResultsWindow : Window
     {
         private List<FileScanReport> scanReports;
+        private ScanWindow parentScanWindow;
 
-        public ScanResultsWindow(List<FileScanReport> reports)
+        public ScanResultsWindow(List<FileScanReport> reports, ScanWindow parent)
         {
             InitializeComponent();
             scanReports = reports ?? new List<FileScanReport>();
+            parentScanWindow = parent;
             LoadResults();
         }
 
@@ -50,8 +52,17 @@ namespace NAZARICK_Protocol
             TotalRulesCount.Text = totalRulesMatched.ToString();
         }
 
+        private void BackButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Go BAck
+            parentScanWindow?.Show();
+            this.Close();
+        }
+
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
+            // Close both windows
+            parentScanWindow?.Close();
             this.Close();
         }
     }

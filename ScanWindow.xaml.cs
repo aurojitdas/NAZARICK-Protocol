@@ -316,9 +316,11 @@ namespace NAZARICK_Protocol
 
         private void ShowResultsButton_Click(object sender, RoutedEventArgs e)
         {
+            // Hide the scan window
+            this.Hide();
+
             // Open the scan results window
-            var resultsWindow = new ScanResultsWindow(scanResults);
-            resultsWindow.Owner = this;
+            var resultsWindow = new ScanResultsWindow(scanResults, this);
             resultsWindow.ShowDialog();
         }
 

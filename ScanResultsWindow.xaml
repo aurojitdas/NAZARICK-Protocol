@@ -201,6 +201,10 @@
         <!-- Action Buttons -->
         <Border Grid.Row="3" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="35,15">
+                <Button x:Name="BackButton" Content="Back" Width="100" Height="35" 
+                       Background="#6c757d" Foreground="White" BorderThickness="0"
+                       Style="{StaticResource StandardButtonStyle}" Margin="0,0,10,0"
+                       Click="BackButton_Click"/>
                 <Button x:Name="CloseButton" Content="Close" Width="100" Height="35" 
                        Background="#0078D4" Foreground="White" BorderThickness="0"
                        Style="{StaticResource StandardButtonStyle}"
