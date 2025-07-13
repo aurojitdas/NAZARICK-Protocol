@@ -1,9 +1,11 @@
-﻿using System;
+﻿using NAZARICK_Protocol.service;
+using NAZARICK_Protocol.service.Results;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
-using NAZARICK_Protocol.service.Results;
 
 namespace NAZARICK_Protocol
 {
@@ -11,12 +13,16 @@ namespace NAZARICK_Protocol
     {
         private List<FileScanReport> scanReports;
         private ScanWindow parentScanWindow;
+        private MainWindow mainWindow;
+        private VirusTotalAPI vt;
 
-        public ScanResultsWindow(List<FileScanReport> reports, ScanWindow parent)
+        public ScanResultsWindow(List<FileScanReport> reports, ScanWindow parent, MainWindow mainWindow)
         {
             InitializeComponent();
             scanReports = reports ?? new List<FileScanReport>();
             parentScanWindow = parent;
+            this.mainWindow = mainWindow;
+            vt = new VirusTotalAPI("68d9e1716c7df15e701bcce1addafd4231c2d288c5869726ecb9a31ff28ba878", this.mainWindow);           
             LoadResults();
         }
 
@@ -52,9 +58,56 @@ namespace NAZARICK_Protocol
             TotalRulesCount.Text = totalRulesMatched.ToString();
         }
 
+        #region VirusTotal Button Handlers
+
+        private async void SendHashToVT_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is string filePath)
+            {
+                // Dummy code for sending hash to VirusTotal
+                //MessageBox.Show($"Sending file hash to VirusTotal for:\n{filePath}",
+                //               "Hash to VirusTotal",
+                //               MessageBoxButton.OK,
+                //               MessageBoxImage.Information);
+                string response = //await vt.UploadAndAnalyzeFile(file_path);
+                await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
+                if (!string.IsNullOrEmpty(response))
+                {
+                    mainWindow.LogMessage(response);
+                }
+                VirusTotalFileAnalysisResults? op = vt.ParseFileAnalysis(response);
+                if (op != null)
+                {
+                    ShowVirusTotalAnalysisResults(op);
+                }
+            }
+        }
+
+        private async void SendFileToVT_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is string filePath)
+            {
+                string response = await vt.UploadAndAnalyzeFile(filePath);
+                
+                if (!string.IsNullOrEmpty(response))
+                {
+                    VirusTotalFileAnalysisResults? op = vt.ParseFileAnalysis(response);
+                    if (op != null)
+                    {
+                        ShowVirusTotalAnalysisResults(op);
+                    }
+                }
+            }
+                
+        }
+
+        #endregion
+
+        #region Navigation Button Handlers
+
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
-            // Go BAck
+            // Show the parent scan window and close this window
             parentScanWindow?.Show();
             this.Close();
         }
@@ -64,6 +117,12 @@ namespace NAZARICK_Protocol
             // Close both windows
             parentScanWindow?.Close();
             this.Close();
+        }
+
+        #endregion
+        private void ShowVirusTotalAnalysisResults(VirusTotalFileAnalysisResults analysisResult)
+        {
+            VirusTotalResultsWindow.ShowAnalysisResults(analysisResult, this.mainWindow);
         }
     }
 }

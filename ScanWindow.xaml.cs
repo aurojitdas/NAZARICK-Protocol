@@ -13,6 +13,7 @@ namespace NAZARICK_Protocol
         private int foldersScanned = 0;
         private long dataSizeScanned = 0;
         private int infectedFiles = 0;
+        private MainWindow _mainWindow;
 
         // Store scan results
         private List<FileScanReport> scanResults = new List<FileScanReport>();
@@ -20,8 +21,9 @@ namespace NAZARICK_Protocol
         // Expandable sections state
         private bool itemsDetailsExpanded = true;
 
-        public ScanWindow()
+        public ScanWindow(MainWindow mainWindow)
         {
+            _mainWindow = mainWindow;
             InitializeComponent();
             InitializeScan();
         }
@@ -320,8 +322,9 @@ namespace NAZARICK_Protocol
             this.Hide();
 
             // Open the scan results window
-            var resultsWindow = new ScanResultsWindow(scanResults, this);
-            resultsWindow.ShowDialog();
+            var resultsWindow = new ScanResultsWindow(scanResults, this, this._mainWindow);
+            resultsWindow.Show();
+
         }
 
         private void StopButton_Click(object sender, RoutedEventArgs e)
