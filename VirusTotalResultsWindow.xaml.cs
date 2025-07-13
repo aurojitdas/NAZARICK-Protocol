@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using NAZARICK_Protocol.service;
 
 namespace NAZARICK_Protocol
@@ -10,14 +11,34 @@ namespace NAZARICK_Protocol
     public partial class VirusTotalResultsWindow : Window
     {
         private VirusTotalFileAnalysisResults _analysis;
+        private DispatcherTimer _progressTimer;
+        private DateTime _startTime;
 
         public VirusTotalResultsWindow()
         {
             InitializeComponent();
+            _progressTimer = new DispatcherTimer();
+            _progressTimer.Interval = TimeSpan.FromSeconds(1);
+            _progressTimer.Tick += (s, e) =>
+            {
+                var elapsed = DateTime.Now - _startTime;
+                txtElapsedTime.Text = $"{elapsed.TotalSeconds:F0}s";
+            };
+        }
+
+        public void ShowLoading(string message = "Analyzing file...")
+        {
+            _startTime = DateTime.Now;
+            txtLoadingMessage.Text = message;
+            LoadingSection.Visibility = Visibility.Visible;
+            ResultsSection.Visibility = Visibility.Collapsed;
+            txtElapsedTime.Text = "0s";
+            _progressTimer.Start();
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e)
         {
+            _progressTimer?.Stop();
             this.Close();
         }
 
@@ -44,10 +65,14 @@ namespace NAZARICK_Protocol
 
         public void DisplayAnalysisResult(VirusTotalFileAnalysisResults analysis)
         {
+            // Stop the timer and hide loading screen
+            _progressTimer?.Stop();
+            LoadingSection.Visibility = Visibility.Collapsed;
+            ResultsSection.Visibility = Visibility.Visible;
+
             if (analysis == null)
             {
-                UpdateDisplay("No analysis result", 0, 0, 0, 0, "Unknown");
-                //txtAnalysisDetails.Text = "No VirusTotal analysis result provided.";
+                txtLoadingMessage.Text = "No analysis result";
                 return;
             }
 
@@ -55,6 +80,7 @@ namespace NAZARICK_Protocol
 
             // Update header with file name
             txtTitle.Text = $"VirusTotal Analysis - {analysis.MeaningfulName ?? "Unknown File"}";
+            txtStatus.Text = "Analysis completed";
 
             // Calculate clean count
             int cleanCount = analysis.TotalScans - analysis.MaliciousDetections - analysis.SuspiciousDetections;
@@ -179,21 +205,7 @@ namespace NAZARICK_Protocol
 
             return $"{len:0.##} {sizes[order]}";
         }
-
-        /// <summary>
-        /// method to show the VirusTotal analysis results window
-        /// </summary>
-        /// <param name="analysis">The VirusTotal analysis result to display</param>
-        /// <param name="owner">The parent window (optional)</param>
-        public static void ShowAnalysisResults(VirusTotalFileAnalysisResults analysis, Window owner = null)
-        {
-            var window = new VirusTotalResultsWindow();
-            if (owner != null)
-            {
-                window.Owner = owner;
-            }
-            window.DisplayAnalysisResult(analysis);
-            window.ShowDialog();
-        }
+        
+       
     }
 }

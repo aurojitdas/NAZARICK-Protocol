@@ -30,8 +30,95 @@
             </StackPanel>
         </Grid>
 
-        <!-- Content Section -->
-        <Grid Margin="40,140,40,80">
+        <!-- Loading Section -->
+        <Grid x:Name="LoadingSection" Margin="40,140,40,80" Visibility="Visible">
+            <Border Background="White" 
+                    CornerRadius="8" 
+                    BorderBrush="#E0E0E0" 
+                    BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.08" BlurRadius="8"/>
+                </Border.Effect>
+
+                <Grid Margin="30">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <!-- Loading Animation -->
+                        <Grid Width="80" Height="80" Margin="0,0,0,30">
+                            <Ellipse x:Name="LoadingRing1" 
+                                     Width="60" Height="60" 
+                                     Stroke="#007BFF" 
+                                     StrokeThickness="4" 
+                                     StrokeDashArray="15,15"
+                                     Opacity="0.8">
+                                <Ellipse.RenderTransform>
+                                    <RotateTransform x:Name="LoadingRotate1" CenterX="30" CenterY="30"/>
+                                </Ellipse.RenderTransform>
+                                <Ellipse.Triggers>
+                                    <EventTrigger RoutedEvent="Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard RepeatBehavior="Forever">
+                                                <DoubleAnimation Storyboard.TargetName="LoadingRotate1"
+                                                               Storyboard.TargetProperty="Angle"
+                                                               From="0" To="360" Duration="0:0:2"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Ellipse.Triggers>
+                            </Ellipse>
+
+                            <Ellipse x:Name="LoadingRing2" 
+                                     Width="40" Height="40" 
+                                     Stroke="#28A745" 
+                                     StrokeThickness="3" 
+                                     StrokeDashArray="10,10"
+                                     Opacity="0.6">
+                                <Ellipse.RenderTransform>
+                                    <RotateTransform x:Name="LoadingRotate2" CenterX="20" CenterY="20"/>
+                                </Ellipse.RenderTransform>
+                                <Ellipse.Triggers>
+                                    <EventTrigger RoutedEvent="Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard RepeatBehavior="Forever">
+                                                <DoubleAnimation Storyboard.TargetName="LoadingRotate2"
+                                                               Storyboard.TargetProperty="Angle"
+                                                               From="360" To="0" Duration="0:0:1.5"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Ellipse.Triggers>
+                            </Ellipse>
+                        </Grid>
+
+                        <!-- Loading Text -->
+                        <TextBlock x:Name="txtLoadingMessage" 
+                                   Text="Analyzing file..."
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="#333333"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,15"/>
+
+                        <TextBlock x:Name="txtLoadingDetails" 
+                                   Text="Please wait while VirusTotal analyzes your file"
+                                   FontSize="14"
+                                   Foreground="#666666"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,20"/>
+
+                        <!-- Progress Information -->
+                        <StackPanel x:Name="ProgressInfo" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,20">
+                            <TextBlock Text="Elapsed Time: " FontSize="12" Foreground="#666666"/>
+                            <TextBlock x:Name="txtElapsedTime" Text="0s" FontSize="12" Foreground="#333333" FontWeight="SemiBold"/>
+                        </StackPanel>
+
+
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Results Content Section -->
+        <Grid x:Name="ResultsSection" Margin="40,140,40,80" Visibility="Collapsed">
             <Border Background="White" 
                     CornerRadius="8" 
                     BorderBrush="#E0E0E0" 

@@ -64,13 +64,14 @@ namespace NAZARICK_Protocol
         {
             if (sender is Button button && button.Tag is string filePath)
             {
-                // Dummy code for sending hash to VirusTotal
-                //MessageBox.Show($"Sending file hash to VirusTotal for:\n{filePath}",
-                //               "Hash to VirusTotal",
-                //               MessageBoxButton.OK,
-                //               MessageBoxImage.Information);
-                string response = //await vt.UploadAndAnalyzeFile(file_path);
-                await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
+                // Create and show the results window with loading
+                var resultsWindow = new VirusTotalResultsWindow();
+                resultsWindow.Owner = this.mainWindow;
+                resultsWindow.Show();
+                resultsWindow.ShowLoading("Checking file hash...");
+
+                string response = await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
+
                 if (!string.IsNullOrEmpty(response))
                 {
                     mainWindow.LogMessage(response);
@@ -78,7 +79,7 @@ namespace NAZARICK_Protocol
                 VirusTotalFileAnalysisResults? op = vt.ParseFileAnalysis(response);
                 if (op != null)
                 {
-                    ShowVirusTotalAnalysisResults(op);
+                    resultsWindow.DisplayAnalysisResult(op);
                 }
             }
         }
@@ -87,6 +88,12 @@ namespace NAZARICK_Protocol
         {
             if (sender is Button button && button.Tag is string filePath)
             {
+                // Create and show the results window with loading
+                var resultsWindow = new VirusTotalResultsWindow();
+                resultsWindow.Owner = this.mainWindow;
+                resultsWindow.Show();
+                resultsWindow.ShowLoading("Uploading and analyzing file...");
+
                 string response = await vt.UploadAndAnalyzeFile(filePath);
                 
                 if (!string.IsNullOrEmpty(response))
@@ -94,7 +101,7 @@ namespace NAZARICK_Protocol
                     VirusTotalFileAnalysisResults? op = vt.ParseFileAnalysis(response);
                     if (op != null)
                     {
-                        ShowVirusTotalAnalysisResults(op);
+                        resultsWindow.DisplayAnalysisResult(op);
                     }
                 }
             }
@@ -120,9 +127,6 @@ namespace NAZARICK_Protocol
         }
 
         #endregion
-        private void ShowVirusTotalAnalysisResults(VirusTotalFileAnalysisResults analysisResult)
-        {
-            VirusTotalResultsWindow.ShowAnalysisResults(analysisResult, this.mainWindow);
-        }
+       
     }
 }

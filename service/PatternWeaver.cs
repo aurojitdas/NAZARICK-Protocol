@@ -266,10 +266,10 @@ namespace NAZARICK_Protocol.service
         {
             PEAnalysisResultsWindow.ShowAnalysisResults(analysisResult, this.mainWindow);
         }
-        private void ShowVirusTotalAnalysisResults(VirusTotalFileAnalysisResults analysisResult)
-        {
-            VirusTotalResultsWindow.ShowAnalysisResults(analysisResult, this.mainWindow);
-        }
+        //private void ShowVirusTotalAnalysisResults(VirusTotalFileAnalysisResults analysisResult)
+        //{
+          //  VirusTotalResultsWindow.ShowAnalysisResults(analysisResult, this.mainWindow);
+        //}
     }
 
 }
