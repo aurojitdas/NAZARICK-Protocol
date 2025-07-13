@@ -37,11 +37,11 @@ namespace NAZARICK_Protocol
             this.Closed += MainWindow_Closed;
             pw = new PatternWeaver(this);
 
-            InitializeSystem();
+            InitializeSystemAsync();
             StartSystemMonitoring();
         }
 
-        private void InitializeSystem()
+        private async Task InitializeSystemAsync()
         {
             LogMessage("[INFO] N.A.Z.A.R.I.C.K. Protocol starting...");
             LogMessage("[INFO] Initializing YARA engine...");
@@ -49,7 +49,7 @@ namespace NAZARICK_Protocol
             
 
 
-            string yaraResult = pw.initialize_YARA();
+            string yaraResult = await pw.initialize_YARA();
             LogMessage($"[INFO] {yaraResult}");
             initalizeRealTimeMonitor();
             // Update UI elements           
@@ -250,8 +250,19 @@ namespace NAZARICK_Protocol
 
             if (pw != null)
             {
-                pw.cleanup();
-                LogMessage("[INFO] YARA engine cleanup completed");
+                try
+                {
+                    // Cancel any ongoing operations first
+                    pw.CancelOperation();                   
+
+                    // Then cleanup
+                    pw.cleanup();
+                    LogMessage("[INFO] YARA engine cleanup completed");
+                }
+                catch (Exception ex)
+                {
+                    LogMessage($"[WARNING] Error during cleanup: {ex.Message}");
+                }
             }
 
             LogMessage("[INFO] Application shutdown complete");
