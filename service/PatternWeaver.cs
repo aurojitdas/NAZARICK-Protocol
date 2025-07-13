@@ -111,7 +111,7 @@ namespace NAZARICK_Protocol.service
 
         public async Task scanFile(String file_path)
         {
-            ShowScanWindow();
+            ShowScanWindow(mainWindow);
             List<ScanResult> scanResults;
             if (file_path != null)
             {
@@ -122,13 +122,13 @@ namespace NAZARICK_Protocol.service
                 }
 
                 mainWindow.LogMessage("Scanning !!...");
-                string response = //await vt.UploadAndAnalyzeFile(file_path);
-                await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
-                if (!string.IsNullOrEmpty(response)) {
-                    mainWindow.LogMessage(response);
-                 }
-                //VirusTotalFileAnalysisResults? op = vt.ParseFileAnalysis(response);
-                //ShowVirusTotalAnalysisResults(op);
+                //string response = await vt.UploadAndAnalyzeFile(file_path);
+                //await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
+                //if (!string.IsNullOrEmpty(response)) {
+                //    mainWindow.LogMessage(response);
+                // }
+               // VirusTotalFileAnalysisResults? op = vt.ParseFileAnalysis(response);
+               // ShowVirusTotalAnalysisResults(op);
                
 
 
@@ -163,7 +163,7 @@ namespace NAZARICK_Protocol.service
 
         public async Task scanFiles(List<String> files)
         {
-            ShowScanWindow();
+            ShowScanWindow(mainWindow);
             List<ScanResult> scanResults =null;
             if (files != null)
             {
@@ -252,9 +252,9 @@ namespace NAZARICK_Protocol.service
             }
         }
 
-        private void ShowScanWindow()
+        private void ShowScanWindow(MainWindow mainWindow)
         {
-            currentScanWindow = new ScanWindow();
+            currentScanWindow = new ScanWindow(mainWindow);
             //currentScanWindow.Owner = this;
             currentScanWindow.Show(); // Use Show() instead of ShowDialog() for non-blocking
 
