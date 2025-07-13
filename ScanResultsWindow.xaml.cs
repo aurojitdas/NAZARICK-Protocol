@@ -66,7 +66,7 @@ namespace NAZARICK_Protocol
             {
                 // Create and show the results window with loading
                 var resultsWindow = new VirusTotalResultsWindow();
-                resultsWindow.Owner = this.mainWindow;
+                resultsWindow.Owner = this;
                 resultsWindow.Show();
                 resultsWindow.ShowLoading("Checking file hash...");
 
@@ -90,7 +90,7 @@ namespace NAZARICK_Protocol
             {
                 // Create and show the results window with loading
                 var resultsWindow = new VirusTotalResultsWindow();
-                resultsWindow.Owner = this.mainWindow;
+                resultsWindow.Owner = this;
                 resultsWindow.Show();
                 resultsWindow.ShowLoading("Uploading and analyzing file...");
 
@@ -104,8 +104,7 @@ namespace NAZARICK_Protocol
                         resultsWindow.DisplayAnalysisResult(op);
                     }
                 }
-            }
-                
+            }                
         }
 
         #endregion
