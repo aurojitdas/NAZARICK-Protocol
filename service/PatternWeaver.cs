@@ -10,7 +10,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using System.Threading;
 
 namespace NAZARICK_Protocol.service
 {
@@ -25,50 +24,38 @@ namespace NAZARICK_Protocol.service
         private VirusTotalAPI vt;
         PEAnalyzer Pe;
         FileScanReport scanReport;
-        private CancellationTokenSource cancellationTokenSource;
 
         public PatternWeaver(MainWindow mainWindow)
         {
             this.mainWindow = mainWindow;
             vt = new VirusTotalAPI("68d9e1716c7df15e701bcce1addafd4231c2d288c5869726ecb9a31ff28ba878", this.mainWindow);
         }
-
-        public async Task<String> initialize_YARA()
+        public String initialize_YARA()
         {
-            try
-            {
-                mainWindow.LogMessage("Initializing YARA Compiler!!...");
-                context = new YaraContext();
-                compiler = new Compiler();
-                mainWindow.LogMessage("YARA Compiler initialization SUCCESS!!...");
-
-                // Make rule loading async to prevent UI freezing
-                await addRuleFilesAsync("rules\\");
-                await compileRulesAsync();
-
-                Pe = new PEAnalyzer();
-                return "YARA Initialized Successfully";
-            }
-            catch (Exception ex)
-            {
-                mainWindow.LogMessage($"YARA initialization failed: {ex.Message}");
-                return $"YARA initialization failed: {ex.Message}";
-            }
+            mainWindow.LogMessage("Initializing YARA Compiler!!...");
+            context = new YaraContext();
+            compiler = new Compiler();
+            mainWindow.LogMessage("YARA Compiler initialization SUCCESS!!...");            
+            addRuleFiles("rules\\");
+            compileRules();
+            Pe = new PEAnalyzer();
+            //scanFile("C:\\Windows\\System32\\notepad.exe");
+            //cleanup();
+            return "YARA Initialized Succesfully";
         }
 
-        public async Task addRuleFilesAsync(String folder_path)
+        public void addRuleFiles(String folder_path)
         {
             int rules_no = 0;
             string absoluteFolderPath = Path.GetFullPath(folder_path);
-
             if (!Directory.Exists(folder_path))
             {
                 mainWindow.LogMessage($"Error: Folder '{absoluteFolderPath}' does not exist.");
-                return;
+                
             }
 
             try
-            {
+            {               
                 var ruleFiles = Directory.EnumerateFiles(absoluteFolderPath, "*.yar", SearchOption.AllDirectories)
                                         .Concat(Directory.EnumerateFiles(absoluteFolderPath, "*.yara", SearchOption.AllDirectories))
                                         .ToList();
@@ -76,368 +63,177 @@ namespace NAZARICK_Protocol.service
                 if (!ruleFiles.Any())
                 {
                     mainWindow.LogMessage($"No YARA rule files (*.yar, *.yara) found in '{absoluteFolderPath}'.");
-                    return;
-                }
+                    
+                }                
 
-                mainWindow.LogMessage($"Found {ruleFiles.Count} rule files. Loading...");
-
-                // Processing rules in batches to prevent memory issues
-                const int batchSize = 50;
-                int totalBatches = (int)Math.Ceiling((double)ruleFiles.Count / batchSize);
-
-                for (int batchIndex = 0; batchIndex < totalBatches; batchIndex++)
-                {
-                    var batch = ruleFiles.Skip(batchIndex * batchSize).Take(batchSize);
-
-                    foreach (var ruleFile in batch)
-                    {
-                        try
-                        {
-                            if (compiler != null)
-                            {
-                                // Add progress reporting
-                                mainWindow.LogMessage($"Loading rule file {rules_no + 1}/{ruleFiles.Count}: {Path.GetFileName(ruleFile)}");
-
-                                // Validate rule file before adding
-                                if (await IsValidRuleFileAsync(ruleFile))
-                                {
-                                    if (compiler != null)
-                                    {
-                                        compiler.AddRuleFile(ruleFile);
-                                        rules_no++;
-                                    }                                    
-                                }
-                                else
-                                {
-                                    mainWindow.LogMessage($"Skipping invalid rule file: {ruleFile}");
-                                }
-                            }
-                            else
-                            {
-                                mainWindow.LogMessage("Compiler init error!!...");
-                                return;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            mainWindow.LogMessage($"Error adding rule file '{ruleFile}': {ex.Message}");
-                            // Continueing with other files instead of failing completely
-                        }
-                    }
-
-                    // UI to update between batches
-                    await Task.Delay(10);
-
-                    // Update progress
-                    mainWindow.Dispatcher.Invoke(() =>
-                    {
-                        mainWindow.YaraRulesCountText.Text = $"Rules loaded: {rules_no}/{ruleFiles.Count}";
-                    });
-                }
-
-                mainWindow.LogMessage($"All rule files processed. Loaded {rules_no} rules successfully.");
-            }
-            catch (Exception ex)
-            {
-                mainWindow.LogMessage($"An unexpected error occurred during rule loading: {ex.Message}");
-            }
-        }
-
-        private async Task<bool> IsValidRuleFileAsync(string ruleFile)
-        {
-            try
-            {
-                // Basic validation - check if file exists and is readable
-                if (!File.Exists(ruleFile))
-                    return false;
-
-                // Check file size 
-                var fileInfo = new FileInfo(ruleFile);
-                if (fileInfo.Length > 10 * 1024 * 1024) // 10MB limit
-                {
-                    mainWindow.LogMessage($"Skipping large rule file: {ruleFile} ({fileInfo.Length / 1024 / 1024}MB)");
-                    return false;
-                }
-
-                // Quick syntax check 
-                var content = await File.ReadAllTextAsync(ruleFile);
-                return content.Contains("rule ") && !string.IsNullOrWhiteSpace(content);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public async Task compileRulesAsync()
-        {
-            try
-            {
-                mainWindow.LogMessage("Compiling YARA rules... This may take a while for large rule sets.");
-
-                // Running compilation in a separate task to prevent UI blocking
-                await Task.Run(() =>
-                {
-                    if (rules!=null)
-                    {
-                        rules = compiler.Compile();
-                    }
-                   
-                });
-
-                mainWindow.Dispatcher.Invoke(() =>
-                {
-                    mainWindow.YaraRulesStatusText.Text = "Compiled successfully";
-                });
-
-                mainWindow.LogMessage("YARA rules Compilation SUCCESS!!...");
-            }
-            catch (Exception ex)
-            {
-                mainWindow.LogMessage($"YARA rules compilation failed: {ex.Message}");
-                throw;
-            }
-        }
-
-        // Adding method to compile rules with progress reporting
-        public async Task compileRulesWithProgressAsync(IProgress<string> progress = null)
-        {
-            try
-            {
-                progress?.Report("Starting compilation...");
-                mainWindow.LogMessage("Compiling YARA rules... This may take a while for large rule sets.");
-
-                cancellationTokenSource = new CancellationTokenSource();
-
-                await Task.Run(() =>
+                foreach (var ruleFile in ruleFiles)
                 {
                     try
                     {
-                        rules = compiler.Compile();
+                        mainWindow.LogMessage("Loading YARA rules...");
+                        if (compiler != null)
+                        {
+
+                            //mainWindow.LogMessage($"Adding rule file: {ruleFile}");
+                            compiler.AddRuleFile(ruleFile);
+                            //mainWindow.LogMessage("YARA rules Load SUCCESS!!...");
+                            rules_no++;
+                        }
+                        else
+                        {
+                            mainWindow.LogMessage("Compiler init error!!...");
+                        }
+
                     }
                     catch (Exception ex)
                     {
-                        progress?.Report($"Compilation error: {ex.Message}");
-                        throw;
+                        mainWindow.LogMessage($"Error adding rule file '{ruleFile}': {ex.Message}aaa");
                     }
-                }, cancellationTokenSource.Token);
-
-                progress?.Report("Compilation completed successfully");
-
-                mainWindow.Dispatcher.Invoke(() =>
-                {
-                    mainWindow.YaraRulesStatusText.Text = "Compiled successfully";
-                });
-
-                mainWindow.LogMessage("YARA rules Compilation SUCCESS!!...");
-            }
-            catch (OperationCanceledException)
-            {
-                mainWindow.LogMessage("YARA rules compilation was cancelled.");
-                throw;
+                }
+                mainWindow.YaraRulesCountText.Text = "Rules loaded: "+ rules_no;                
+                mainWindow.LogMessage("All rule files processed. Attempting to compile rules...");
+               
             }
             catch (Exception ex)
             {
-                mainWindow.LogMessage($"YARA rules compilation failed: {ex.Message}");
-                throw;
-            }
+                mainWindow.LogMessage($"An unexpected error occurred during rule compilation: {ex.Message}");
+                
+            }           
         }
 
-        // Adding method to cancel operations
-        public void CancelOperation()
+        public void compileRules()
         {
-            cancellationTokenSource?.Cancel();
+            rules = compiler.Compile();
+            mainWindow.YaraRulesStatusText.Text = "Compiled successfully";
+            mainWindow.LogMessage("YARA rules Compilation SUCCESS!!...");
+            
         }
 
-        // Optimizing memory usage during scanning
         public async Task scanFile(String file_path)
         {
             ShowScanWindow(mainWindow);
-            List<ScanResult> scanResults = null;
-
+            List<ScanResult> scanResults;
             if (file_path != null)
             {
-                try
+                if (scanner != null) { }
+                else
                 {
-                    if (scanner == null)
-                    {
-                        scanner = new Scanner();
-                    }
-
-                    mainWindow.LogMessage("Scanning !!...");
-                    currentScanWindow.UpdateCurrentFile(file_path);
-
-                    // Runing scan in background thread
-                    scanResults = await Task.Run(() => scanner.ScanFile(file_path, rules));
-
-                    currentScanWindow.AddFilesScanned();
-
-                    // scan report and add to scan window
-                    FileScanReport scanReport = new FileScanReport(file_path, scanResults);
-                    currentScanWindow.AddScanResult(scanReport);
-
-                    mainWindow.LogMessage("Scan SUCCESS!!...");
-                    currentScanWindow.CompleteScan();
-                    displayScanResults(scanResults, file_path);
+                    scanner = new Scanner();
                 }
-                catch (Exception ex)
-                {
-                    mainWindow.LogMessage($"Scan error: {ex.Message}");
-                    currentScanWindow?.CompleteScan();
-                }
+
+                mainWindow.LogMessage("Scanning !!...");
+                //string response = await vt.UploadAndAnalyzeFile(file_path);
+                //await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
+                //if (!string.IsNullOrEmpty(response)) {
+                //    mainWindow.LogMessage(response);
+                // }
+               // VirusTotalFileAnalysisResults? op = vt.ParseFileAnalysis(response);
+               // ShowVirusTotalAnalysisResults(op);
+               
+
+
+                // mainWindow.LogMessage(op.MeaningfulName);
+                // mainWindow.LogMessage(op.IsMalicious.ToString());
+                // mainWindow.LogMessage(op.MaliciousDetections.ToString());
+                // mainWindow.LogMessage(op.ThreatLabel);
+
+                //PEAnalysisResult pr = Pe.Analyze(file_path);
+                //ShowPEAnalysisResults(pr);
+
+                currentScanWindow.UpdateCurrentFile(file_path);
+                scanResults = scanner.ScanFile(file_path, rules);
+                currentScanWindow.AddFilesScanned();
+
+                // Create scan report and add to scan window
+                FileScanReport scanReport = new FileScanReport(file_path, scanResults);
+                currentScanWindow.AddScanResult(scanReport);
+
+                mainWindow.LogMessage("Scan SUCCESS!!...");
+                //mainWindow.LogMessage(pr.ToString());
+                currentScanWindow.CompleteScan();
+                displayScanResults(scanResults, file_path);
+
             }
             else
             {
                 mainWindow.LogMessage("Scan Cancelled!!...");
             }
+                
         }
 
         public async Task scanFiles(List<String> files)
         {
             ShowScanWindow(mainWindow);
-
+            List<ScanResult> scanResults =null;
             if (files != null)
             {
-                try
+                if (scanner != null) { }
+                else
                 {
-                    if (scanner == null)
-                    {
-                        scanner = new Scanner();
-                    }
-
-                    mainWindow.LogMessage("Scanning !!...");
-
-                    foreach (string file in files)
-                    {
-                        currentScanWindow.UpdateCurrentFile(file);
-
-                        // Running each scan in background to prevent UI freezing
-                        var scanResults = await Task.Run(() => scanner.ScanFile(file, rules));
-
-                        currentScanWindow.AddFilesScanned();
-                        scanReport = new FileScanReport(file, scanResults);
-                        currentScanWindow.AddScanResult(scanReport);
-                        displayScanResults(scanResults, file);
-
-                        // Small delay to allow UI updates
-                        await Task.Delay(10);
-                    }
-
-                    currentScanWindow.CompleteScan();
-                    mainWindow.LogMessage("Scan SUCCESS!!...");
+                    scanner = new Scanner();
                 }
-                catch (Exception ex)
+                mainWindow.LogMessage("Scanning !!...");
+                foreach (string file in files)
                 {
-                    mainWindow.LogMessage($"Scan error: {ex.Message}");
-                    currentScanWindow?.CompleteScan();
+                    currentScanWindow.UpdateCurrentFile(file);
+                    scanResults = scanner.ScanFile(file, rules);
+                    currentScanWindow.AddFilesScanned();
+                    scanReport = new FileScanReport(file,scanResults);
+                    currentScanWindow.AddScanResult(scanReport);
+                    displayScanResults(scanResults, file);
                 }
+                currentScanWindow.CompleteScan();              
+                mainWindow.LogMessage("Scan SUCCESS!!...");               
+               
+
             }
             else
             {
                 mainWindow.LogMessage("Scan Cancelled!!...");
             }
+
         }
 
         public void cleanup()
         {
-            try
-            {
-                mainWindow.LogMessage("Cleaning up YARA resources...\n");
+            mainWindow.LogMessage("Cleaning up YARA resources...\n"); // For debugging
 
-                // Canceling any ongoing operations
-                if (cancellationTokenSource != null && !cancellationTokenSource.IsCancellationRequested)
-                {
-                    cancellationTokenSource.Cancel();
-                    mainWindow.LogMessage("Cancellation requested for ongoing operations.\n");
-                }
-
-                // Waiting briefly for operations to cancel
-                Thread.Sleep(300);
-
-                // Waiting briefly for operations to cancel
-               // Thread.Sleep(200);
-
-                // Dispose scanner 
-                if (scanner != null)
-                {
-                    try
-                    {
-                        scanner = null;
-                        mainWindow.LogMessage("Scanner disposed.\n");
-                    }
-                    catch (Exception ex)
-                    {
-                        mainWindow.LogMessage($"Warning: Scanner disposal error: {ex.Message}\n");
-                    }
-                }
-
-                // Dispose compiled rules 
-                if (rules != null)
-                {
-                    try
-                    {
-                        rules.Dispose();
-                        rules = null;
-                        mainWindow.LogMessage("Compiled rules disposed.\n");
-                    }
-                    catch (Exception ex)
-                    {
-                        mainWindow.LogMessage($"Warning: Rules disposal error: {ex.Message}\n");
-                    }
-                }
-
-                // Dispose compiler 
-                if (compiler != null)
-                {
-                    try
-                    {
-                        compiler.Dispose();
-                        compiler = null;
-                        mainWindow.LogMessage("Compiler disposed.\n");
-                    }
-                    catch (Exception ex)
-                    {
-                        mainWindow.LogMessage($"Warning: Compiler disposal error: {ex.Message}\n");
-                    }
-                }
-
-                // Dispose YARA context 
-                if (context != null)
-                {
-                    try
-                    {
-                        context.Dispose();
-                        context = null;
-                        mainWindow.LogMessage("YARA Context disposed.\n");
-                    }
-                    catch (Exception ex)
-                    {
-                        mainWindow.LogMessage($"Warning: Context disposal error: {ex.Message}\n");
-                    }
-                }
-
-                // Dispose cancellation token source
-                try
-                {
-                    cancellationTokenSource?.Dispose();
-                    cancellationTokenSource = null;
-                }
-                catch (Exception ex)
-                {
-                    mainWindow.LogMessage($"Warning: CancellationTokenSource disposal error: {ex.Message}\n");
-                }
-
-                mainWindow.LogMessage("YARA cleanup complete.\n");
-                mainWindow.ScanInfoTextBox?.ScrollToEnd();
+            // Dispose scanner 
+            if (scanner != null)
+            {                
+                scanner = null; // Set to null to indicate it's disposed
+                mainWindow.LogMessage("Scanner disposed.\n");
             }
-            catch (Exception ex)
+
+            // Dispose compiled rules 
+            if (rules != null)
             {
-                // Catch any unexpected errors during cleanup
-                mainWindow.LogMessage($"Error during YARA cleanup: {ex.Message}\n");
+                rules.Dispose();
+                rules = null;
+                mainWindow.LogMessage("Compiled rules disposed.\n");
             }
+
+            // Dispose compiler 
+            if (compiler != null)
+            {
+                compiler.Dispose();
+                compiler = null;
+                mainWindow.LogMessage("Compiler disposed.\n");
+            }
+
+            // Dispose YARA context 
+            if (context != null)
+            {
+                context.Dispose();
+                context = null;
+                mainWindow.LogMessage("YARA Context disposed.\n");                
+            }
+
+            mainWindow.LogMessage("YARA cleanup complete.\n");
+            mainWindow.ScanInfoTextBox.ScrollToEnd();
         }
 
-        private void displayScanResults(List<ScanResult> scanResults, string filepath)
+        private void displayScanResults(List<ScanResult> scanResults,string filepath)
         {
             if (scanResults != null && scanResults.Count > 0)
             {
@@ -445,8 +241,8 @@ namespace NAZARICK_Protocol.service
                 foreach (var result in scanResults)
                 {
                     mainWindow.LogMessage($"Rule matched: {result.MatchingRule.Identifier}\n");
-                    mainWindow.ReportThreatDetected(result.MatchingRule.Identifier, filepath);
-                    currentScanWindow.ReportThreatDetected(result.MatchingRule.Identifier, filepath);
+                    mainWindow.ReportThreatDetected(result.MatchingRule.Identifier,filepath);
+                    currentScanWindow.ReportThreatDetected(result.MatchingRule.Identifier,filepath);
                 }
                 mainWindow.LogMessage($"Total rules matched: {scanResults.Count}\n");
             }
@@ -459,7 +255,10 @@ namespace NAZARICK_Protocol.service
         private void ShowScanWindow(MainWindow mainWindow)
         {
             currentScanWindow = new ScanWindow(mainWindow);
-            currentScanWindow.Show();
+            //currentScanWindow.Owner = this;
+            currentScanWindow.Show(); // Use Show() instead of ShowDialog() for non-blocking
+
+            // Start the scan window
             currentScanWindow.StartScan();
         }
 
@@ -467,5 +266,10 @@ namespace NAZARICK_Protocol.service
         {
             PEAnalysisResultsWindow.ShowAnalysisResults(analysisResult, this.mainWindow);
         }
+        //private void ShowVirusTotalAnalysisResults(VirusTotalFileAnalysisResults analysisResult)
+        //{
+          //  VirusTotalResultsWindow.ShowAnalysisResults(analysisResult, this.mainWindow);
+        //}
     }
+
 }
