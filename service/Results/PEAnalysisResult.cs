@@ -1,6 +1,4 @@
-﻿using PeNet;
-using PeNet.Header.Pe;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,21 +6,32 @@ using System.Text;
 
 namespace NAZARICK_Protocol.service.Results
 {
+    /// <summary>
+    /// Holds the complete results of a Portable Executable (PE) file analysis.
+    /// </summary>
     public class PEAnalysisResult
     {
-        public string FilePath { get; }
-        public bool IsValidPeFile { get; set; } = false;
-        public List<string> SuspiciousImports { get; } = new List<string>();
-        public List<string> SectionAnomalies { get; } = new List<string>();
-        public List<string> Errors { get; } = new List<string>();
-        public bool IsPotentiallySuspicious => SuspiciousImports.Any() || SectionAnomalies.Any();
+        public string FilePath { get; set; }
+        public bool IsValidPeFile { get; set; }
+        public int TotalScore { get; set; }
+        public string ThreatLevel { get; set; }
+        public string Summary { get; set; }
+
+        public List<string> SuspiciousImports { get; set; } = new List<string>();
+        public List<string> ImportCombinations { get; set; } = new List<string>();
+        public List<string> SectionAnomalies { get; set; } = new List<string>();
+        public string SignatureInfo { get; set; }
+        public string EntryPointInfo { get; set; }
+        public List<string> MetadataInfo { get; set; } = new List<string>();
+        public List<string> Errors { get; set; } = new List<string>();
+
         public PEAnalysisResult(string filePath)
         {
             FilePath = filePath;
         }
 
         /// <summary>
-        /// Returns a formatted, human-readable report of the analysis.
+        /// Returns a formatted, comprehensive report of the entire analysis.
         /// </summary>
         public override string ToString()
         {
@@ -31,47 +40,79 @@ namespace NAZARICK_Protocol.service.Results
 
             if (!IsValidPeFile)
             {
-                sb.AppendLine("Error: Not a valid PE file or could not be parsed.");
+                sb.AppendLine("\n[!] ERROR: File is not a valid PE file or could not be parsed.");
                 foreach (var error in Errors)
                 {
-                    sb.AppendLine($" - {error}");
+                    sb.AppendLine($"    - {error}");
                 }
                 return sb.ToString();
             }
 
-            sb.AppendLine($"\n[+] Overall Status: {(IsPotentiallySuspicious ? "SUSPICIOUS" : "Looks Clean")}");
+            // --- Main Summary ---
+            sb.AppendLine($"\n[SCORE]     Threat Score: {TotalScore}");
+            sb.AppendLine($"[LEVEL]     Threat Level: {ThreatLevel}");
+            sb.AppendLine($"[SUMMARY]   {Summary}");
 
-            sb.AppendLine("\n[+] Suspicious Imports:");
-            if (!SuspiciousImports.Any())
+            sb.AppendLine("\n--- Detailed Findings ---");
+
+            // --- Digital Signature ---
+            sb.AppendLine("\n[+] Digital Signature");
+            sb.AppendLine(string.IsNullOrEmpty(SignatureInfo) ? "    No signature information available." : $"    {SignatureInfo}");
+
+            // --- Entry Point ---
+            if (!string.IsNullOrEmpty(EntryPointInfo))
             {
-                sb.AppendLine("  No suspicious imports found.");
+                sb.AppendLine("\n[!] Entry Point Anomalies");
+                sb.AppendLine($"    {EntryPointInfo.Trim()}");
             }
-            else
+
+            // --- Suspicious Imports ---
+            if (SuspiciousImports.Any())
             {
+                sb.AppendLine("\n[!] Suspicious Imports Found");
                 foreach (var import in SuspiciousImports)
                 {
-                    sb.AppendLine($"  [!] Found: {import}");
+                    sb.AppendLine($"    - {import}");
                 }
             }
 
-            sb.AppendLine("\n[+] Section Anomalies:");
-            if (!SectionAnomalies.Any())
+            // --- Import Combinations ---
+            if (ImportCombinations.Any())
             {
-                sb.AppendLine("  No section anomalies found.");
+                sb.AppendLine("\n[!] Suspicious Import Combinations (Attack Patterns)");
+                foreach (var combo in ImportCombinations)
+                {
+                    sb.AppendLine($"    - {combo}");
+                }
             }
-            else
+
+            // --- Section Anomalies ---
+            if (SectionAnomalies.Any())
             {
+                sb.AppendLine("\n[!] Section Anomalies");
                 foreach (var anomaly in SectionAnomalies)
                 {
-                    sb.AppendLine($"  [!] {anomaly}");
+                    sb.AppendLine($"    - {anomaly}");
                 }
+            }
+
+            // --- Metadata ---
+            if (MetadataInfo.Any())
+            {
+                sb.AppendLine("\n[!] Metadata Anomalies");
+                foreach (var meta in MetadataInfo)
+                {
+                    sb.AppendLine($"    - {meta}");
+                }
+            }
+
+            // --- Clean Bill of Health ---
+            if (ThreatLevel == "CLEAN")
+            {
+                sb.AppendLine("\n[+] No significant suspicious indicators were found.");
             }
 
             return sb.ToString();
-
-
-
-
         }
     }
 }

@@ -140,6 +140,10 @@ namespace NAZARICK_Protocol.service
                 //PEAnalysisResult pr = Pe.Analyze(file_path);
                 //ShowPEAnalysisResults(pr);
 
+                HybridFileAnalyzer hy = new HybridFileAnalyzer();
+                HybridAnalysisResult result = await hy.AnalyzeFile(file_path);
+               mainWindow.LogMessage(result.ToString());
+
                 currentScanWindow.UpdateCurrentFile(file_path);
                 scanResults = scanner.ScanFile(file_path, rules);
                 currentScanWindow.AddFilesScanned();
@@ -265,11 +269,7 @@ namespace NAZARICK_Protocol.service
         private void ShowPEAnalysisResults(PEAnalysisResult analysisResult)
         {
             PEAnalysisResultsWindow.ShowAnalysisResults(analysisResult, this.mainWindow);
-        }
-        //private void ShowVirusTotalAnalysisResults(VirusTotalFileAnalysisResults analysisResult)
-        //{
-          //  VirusTotalResultsWindow.ShowAnalysisResults(analysisResult, this.mainWindow);
-        //}
+        }        
     }
 
 }

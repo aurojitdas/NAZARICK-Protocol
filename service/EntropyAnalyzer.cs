@@ -43,7 +43,7 @@ namespace NAZARICK_Protocol.service
         /// </summary>
         /// <param name="data">The byte array to analyze.</param>
         /// <returns>The entropy value (between 0 and 8).</returns>
-        private double CalculateShannonEntropy(byte[] data)
+        public static double CalculateShannonEntropy(byte[] data)
         {
             // Returning 0 for empty or null data to avoid division by zero.
             if (data == null || data.Length == 0)

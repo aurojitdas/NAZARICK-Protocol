@@ -5,123 +5,391 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace NAZARICK_Protocol.service
 {
     /// <summary>
-    /// Performs static analysis on Windows PE (Portable Executable) files
-    /// to detect suspicious imports and section characteristics.
+    /// Enhanced PE analyzer with scoring system to reduce false positives
     /// </summary>
     internal class PEAnalyzer
     {
-        // A list of function imports that are often used by malware.
-        // Need to update thsi shit
-        private static readonly HashSet<string> SuspiciousFunctionNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        // Categorized imports with different threat levels
+        private static readonly Dictionary<string, int> SuspiciousImports = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
-            // Process Injection & Memory Manipulation
-            "CreateRemoteThread", "WriteProcessMemory", "VirtualAllocEx", "ReadProcessMemory",
-            "ResumeThread", "QueueUserAPC", "SetThreadContext", "NtMapViewOfSection",
+            // HIGH RISK (20-30 points) - Direct process manipulation
+            ["CreateRemoteThread"] = 25,
+            ["WriteProcessMemory"] = 25,
+            ["VirtualAllocEx"] = 20,
+            ["SetThreadContext"] = 25,
+            ["QueueUserAPC"] = 25,
+            ["NtMapViewOfSection"] = 30,
+            ["RtlCreateUserThread"] = 30,
 
-            // Keylogging & Hooking
-            "SetWindowsHookExA", "SetWindowsHookExW", "GetAsyncKeyState", "GetKeyState", "GetRawInputData",
+            // HIGH RISK - Keylogging & Hooking
+            ["SetWindowsHookExA"] = 20,
+            ["SetWindowsHookExW"] = 20,
+            ["GetAsyncKeyState"] = 15,
+            ["GetKeyState"] = 10,
+            ["GetRawInputData"] = 15,
 
-            // Networking & Downloading Payloads
-            "URLDownloadToFileA", "URLDownloadToFileW", "InternetOpenA", "InternetOpenW",
-            "InternetReadFile", "HttpSendRequestA", "HttpSendRequestW", "socket", "send", "recv",
+            // MEDIUM RISK (10-15 points) - Network operations
+            ["URLDownloadToFileA"] = 15,
+            ["URLDownloadToFileW"] = 15,
+            ["InternetOpenA"] = 10,
+            ["InternetOpenW"] = 10,
+            ["InternetReadFile"] = 10,
+            ["HttpSendRequestA"] = 10,
+            ["HttpSendRequestW"] = 10,
+            ["WinHttpOpen"] = 10,
+            ["WSAStartup"] = 8,
+            ["socket"] = 8,
+            ["connect"] = 8,
+            ["send"] = 5,
+            ["recv"] = 5,
 
-            // Loading Libraries / Finding Functions at Runtime
-            "LoadLibraryA", "LoadLibraryW", "GetProcAddress", "LdrLoadDll",
+            // MEDIUM RISK - Anti-debugging
+            ["IsDebuggerPresent"] = 5,
+            ["CheckRemoteDebuggerPresent"] = 8,
+            ["NtQueryInformationProcess"] = 15,
+            ["OutputDebugStringA"] = 10,
+            ["NtSetInformationThread"] = 20,
 
-            // Anti-Analysis & Anti-Debugging
-            "IsDebuggerPresent", "CheckRemoteDebuggerPresent", "OutputDebugStringA", "NtQueryInformationProcess",
+            // LOW RISK (1-5 points) - Common but potentially misused
+            ["LoadLibraryA"] = 2,
+            ["LoadLibraryW"] = 2,
+            ["GetProcAddress"] = 3,
+            ["CreateFileA"] = 1,
+            ["CreateFileW"] = 1,
+            ["WriteFile"] = 1,
+            ["ReadFile"] = 1,
+            ["RegCreateKeyExA"] = 5,
+            ["RegCreateKeyExW"] = 5,
+            ["RegSetValueExA"] = 5,
+            ["RegSetValueExW"] = 5,
 
-            // Cryptography (often used to decrypt malicious payloads)
-            "CryptDecrypt", "CryptAcquireContext", "BCryptDecrypt",
-            
-            // Filesystem & Persistence
-            "CreateFileW", "WriteFile", "RegCreateKeyExA", "RegSetValueExA"
+            // MEDIUM RISK - Cryptography (often used to decrypt payloads)
+            ["CryptDecrypt"] = 12,
+            ["CryptEncrypt"] = 10,
+            ["CryptAcquireContext"] = 8,
+            ["BCryptDecrypt"] = 12,
+            ["BCryptEncrypt"] = 10,
+
+            // HIGH RISK - Service manipulation
+            ["CreateServiceA"] = 20,
+            ["CreateServiceW"] = 20,
+            ["StartServiceA"] = 15,
+            ["StartServiceW"] = 15,
+
+            // HIGH RISK - Token manipulation
+            ["AdjustTokenPrivileges"] = 20,
+            ["OpenProcessToken"] = 8,
+            ["ImpersonateLoggedOnUser"] = 25,
+
+            // Additional suspicious APIs
+            ["VirtualProtect"] = 15,
+            ["VirtualProtectEx"] = 20,
+            ["NtUnmapViewOfSection"] = 20,
+            ["LdrLoadDll"] = 15,
+            ["RtlAdjustPrivilege"] = 20,
+            ["SeDebugPrivilege"] = 25,
+            ["NtRaiseHardError"] = 30,
+            ["NtTerminateProcess"] = 20
         };
 
+        // Suspicious import combinations that indicate specific attack patterns
+        private static readonly List<(string[] Functions, string Description, int BonusScore)> SuspiciousCombinations = new List<(string[], string, int)>
+        {
+            (new[] { "VirtualAllocEx", "WriteProcessMemory", "CreateRemoteThread" }, "Classic Process Injection", 30),
+            (new[] { "SetWindowsHookExA", "GetAsyncKeyState" }, "Keylogger Pattern", 25),
+            (new[] { "SetWindowsHookExW", "GetAsyncKeyState" }, "Keylogger Pattern", 25),
+            (new[] { "OpenProcessToken", "AdjustTokenPrivileges" }, "Privilege Escalation", 20),
+            (new[] { "CreateServiceA", "StartServiceA" }, "Service Installation", 15),
+            (new[] { "CreateServiceW", "StartServiceW" }, "Service Installation", 15),
+            (new[] { "InternetOpenA", "InternetReadFile", "WriteFile" }, "Downloader Pattern", 20),
+            (new[] { "InternetOpenW", "InternetReadFile", "WriteFile" }, "Downloader Pattern", 20),
+            (new[] { "VirtualProtect", "GetProcAddress", "LoadLibraryA" }, "Dynamic API Resolution", 15),
+            (new[] { "IsDebuggerPresent", "CheckRemoteDebuggerPresent", "NtQueryInformationProcess" }, "Anti-Debug Cluster", 25)
+        };
 
-        /// <summary>
-        /// Analyzes a given file for suspicious imports and section anomalies.
-        /// </summary>
-        /// <param name="filePath">The path to the executable file to analyze.</param>
-        /// <returns>A PEAnalysisResult object containing the findings.</returns>
+        // Trusted certificate subjects (can be expanded)
+        private static readonly HashSet<string> TrustedSigners = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Microsoft Corporation",
+            "Microsoft Windows",
+            "Google LLC",
+            "Google Inc",
+            "Adobe Inc.",
+            "Adobe Systems Incorporated",
+            "Intel Corporation",
+            "NVIDIA Corporation",
+            "Oracle Corporation",
+            "Mozilla Corporation",
+            "Apple Inc.",
+            "Amazon.com Services LLC"
+        };
+
         public PEAnalysisResult Analyze(string filePath)
         {
             var result = new PEAnalysisResult(filePath);
 
             if (!File.Exists(filePath))
             {
-                result.Errors.Add("File does not exist." +filePath);
+                result.Errors.Add($"File does not exist: {filePath}");
                 return result;
             }
 
             try
             {
-                
                 var peFile = new PeFile(filePath);
                 result.IsValidPeFile = true;
-                
-                CheckSuspiciousImports(peFile, result);
-                
-                CheckSectionAnomalies(peFile, result);
+
+                // Run all analysis modules
+                int importScore = AnalyzeImports(peFile, result);
+                int sectionScore = AnalyzeSections(peFile, result);
+                int signatureScore = AnalyzeDigitalSignature(filePath, result);
+                int entryPointScore = AnalyzeEntryPoint(peFile, result);
+                int metadataScore = AnalyzeMetadata(peFile, result);
+
+                // Calculate total score
+                result.TotalScore = importScore + sectionScore + signatureScore + entryPointScore + metadataScore;
+
+                // Determine threat level
+                if (result.TotalScore >= 100)
+                {
+                    result.ThreatLevel = "CRITICAL";
+                    result.Summary = "File exhibits multiple high-risk characteristics typical of malware.";
+                }
+                else if (result.TotalScore >= 60)
+                {
+                    result.ThreatLevel = "HIGH";
+                    result.Summary = "File shows several suspicious characteristics that warrant investigation.";
+                }
+                else if (result.TotalScore >= 30)
+                {
+                    result.ThreatLevel = "MEDIUM";
+                    result.Summary = "File has some suspicious elements but may be legitimate.";
+                }
+                else if (result.TotalScore >= 10)
+                {
+                    result.ThreatLevel = "LOW";
+                    result.Summary = "File appears mostly legitimate with minor suspicious elements.";
+                }
+                else
+                {
+                    result.ThreatLevel = "CLEAN";
+                    result.Summary = "File appears to be legitimate software.";
+                }
             }
             catch (Exception ex)
             {
-                // Catch errors from PeNet if the file is not a valid PE,
                 result.IsValidPeFile = false;
-                result.Errors.Add($"PE parsing failed: {ex.Message} "+filePath);
+                result.Errors.Add($"PE parsing failed: {ex.Message}");
             }
 
             return result;
         }
 
-        /// <summary>
-        /// Checks the PE file's imported functions against a list of suspicious ones.
-        /// </summary>
-        private void CheckSuspiciousImports(PeFile peFile, PEAnalysisResult result)
+        private int AnalyzeImports(PeFile peFile, PEAnalysisResult result)
         {
-            if (peFile.ImportedFunctions == null) return;
+            int score = 0;
+            var foundImports = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (peFile.ImportedFunctions == null) return score;
 
             foreach (var import in peFile.ImportedFunctions)
             {
-                if (import.Name != null && SuspiciousFunctionNames.Contains(import.Name))
+                if (import.Name != null && SuspiciousImports.TryGetValue(import.Name, out int importScore))
                 {
-                    result.SuspiciousImports.Add($"{import.Name} (from {import.DLL})");
+                    foundImports.Add(import.Name);
+                    score += importScore;
+                    result.SuspiciousImports.Add($"{import.Name} (from {import.DLL}) [+{importScore} points]");
                 }
             }
+
+            // Check for suspicious combinations
+            foreach (var (functions, description, bonusScore) in SuspiciousCombinations)
+            {
+                if (functions.All(f => foundImports.Contains(f)))
+                {
+                    score += bonusScore;
+                    result.ImportCombinations.Add($"{description} detected [+{bonusScore} points]");
+                }
+            }
+
+            return score;
         }
 
-        /// <summary>
-        /// Analyzes PE sections for anomalies like writable+executable flags.
-        /// </summary>
-        private void CheckSectionAnomalies(PeFile peFile, PEAnalysisResult result)
+        private int AnalyzeSections(PeFile peFile, PEAnalysisResult result)
         {
-            if (peFile.ImageSectionHeaders == null) return;
+            int score = 0;
+
+            if (peFile.ImageSectionHeaders == null) return score;
 
             foreach (var section in peFile.ImageSectionHeaders)
             {
                 bool isExecutable = section.Characteristics.HasFlag(ScnCharacteristicsType.MemExecute);
                 bool isWritable = section.Characteristics.HasFlag(ScnCharacteristicsType.MemWrite);
 
-                // ANOMALY 1: Section is both writable and executable.
-                // Often used by packers and malware to run unpacked code.
+                // Writable + Executable = Major red flag
                 if (isExecutable && isWritable)
                 {
-                    result.SectionAnomalies.Add($"Section '{section.Name}' is both Writable and Executable. This is highly suspicious.");
+                    score += 50;
+                    result.SectionAnomalies.Add($"Section '{section.Name}' is both Writable and Executable [+50 points]");
                 }
 
-                // ANOMALY 2: Virtual size is much larger than raw size.
-                // This indicates a BSS-like section that a packer will fill with code at runtime.
-                // flag it if virtual size is at least 10x raw size, and raw size isn't zero.
-                if (section.VirtualSize > (section.SizeOfRawData * 10) && section.SizeOfRawData > 0)
+                // Unusual section names
+                string sectionName = section.Name.TrimEnd('\0');
+                if (string.IsNullOrWhiteSpace(sectionName) || sectionName.Length == 1)
                 {
-                    result.SectionAnomalies.Add($"Section '{section.Name}' has a Virtual Size ({section.VirtualSize}) that is significantly larger than its Raw Size ({section.SizeOfRawData}).");
+                    score += 10;
+                    result.SectionAnomalies.Add($"Section has suspicious name: '{sectionName}' [+10 points]");
+                }
+
+                // Virtual size much larger than raw size
+                if (section.VirtualSize > 0 && section.SizeOfRawData > 0)
+                {
+                    double ratio = (double)section.VirtualSize / section.SizeOfRawData;
+                    if (ratio > 10)
+                    {
+                        score += 20;
+                        result.SectionAnomalies.Add($"Section '{section.Name}' has Virtual/Raw size ratio of {ratio:F1} [+20 points]");
+                    }
+                }
+
+                // Zero raw size but large virtual size (common in packers)
+                if (section.SizeOfRawData == 0 && section.VirtualSize > 1024)
+                {
+                    score += 15;
+                    result.SectionAnomalies.Add($"Section '{section.Name}' has zero raw size but {section.VirtualSize} virtual size [+15 points]");
                 }
             }
+
+            return score;
         }
-    }
+
+        private int AnalyzeDigitalSignature(string filePath, PEAnalysisResult result)
+        {
+            int score = 0;
+            try
+            {
+                // 1. Extract the certificate from the signed file.
+                // This throws a CryptographicException if the file is not signed.
+                var cert = X509Certificate.CreateFromSignedFile(filePath);
+                var cert2 = new X509Certificate2(cert); // Use the more capable X509Certificate2 class
+
+                // 2. Create a chain to validate the certificate against the system's trusted roots.
+                using (var chain = new X509Chain())
+                {
+                    // 3. Build the chain. This is the primary validation step.
+                    bool isChainValid = chain.Build(cert2);
+
+                    // Check if the chain is valid. If not, analyze why.
+                    if (!isChainValid)
+                    {
+                        score += 30;
+                        var status = chain.ChainStatus.FirstOrDefault(); // Get the primary error
+                        result.SignatureInfo = $"File has an INVALID signature. Reason: {status.StatusInformation.Trim()} [+30 points]";
+                        return score;
+                    }
+
+                    // 4. If the chain is valid, check if the signer is in our trusted list.
+                    string subject = cert2.Subject;
+                    bool isTrusted = TrustedSigners.Any(trusted => subject.Contains(trusted, StringComparison.OrdinalIgnoreCase));
+
+                    if (isTrusted)
+                    {
+                        score -= 50; // Major score reduction for a valid signature from a trusted source.
+                        result.SignatureInfo = $"File signed by a trusted entity: {subject} [-50 points]";
+                    }
+                    else
+                    {
+                        // The signature is valid but the signer is not on our explicit trusted list.
+                        result.SignatureInfo = $"File has a valid signature from: {subject} [0 points]";
+                    }
+                }
+            }
+            catch (CryptographicException)
+            {
+                // This exception is thrown by CreateFromSignedFile if there's no signature.
+                score += 20;
+                result.SignatureInfo = "File is not digitally signed [+20 points]";
+            }
+            catch (Exception ex)
+            {
+                // Catch any other potential errors during validation.
+                score += 10;
+                result.SignatureInfo = $"An error occurred during signature validation: {ex.Message} [+10 points]";
+            }
+
+            return score;
+        }
+
+        private int AnalyzeEntryPoint(PeFile peFile, PEAnalysisResult result)
+        {
+            int score = 0;
+
+            if (peFile.ImageNtHeaders == null) return score;
+
+            uint entryPoint = peFile.ImageNtHeaders.OptionalHeader.AddressOfEntryPoint;
+
+            // Finds which section contains the entry point
+            var entrySection = peFile.ImageSectionHeaders?.FirstOrDefault(s =>
+                entryPoint >= s.VirtualAddress &&
+                entryPoint < s.VirtualAddress + s.VirtualSize);
+
+            if (entrySection != null)
+            {
+                string sectionName = entrySection.Name.TrimEnd('\0');
+
+                // Entry point not in .text section is suspicious
+                if (!sectionName.Equals(".text", StringComparison.OrdinalIgnoreCase))
+                {
+                    score += 25;
+                    result.EntryPointInfo = $"Entry point in unusual section: '{sectionName}' [+25 points]";
+                }
+
+                // Entry point in last section common packer behavior
+                if (peFile.ImageSectionHeaders.Last() == entrySection)
+                {
+                    score += 20;
+                    result.EntryPointInfo += $" Entry point in last section [+20 points]";
+                }
+            }
+
+            return score;
+        }
+
+        private int AnalyzeMetadata(PeFile peFile, PEAnalysisResult result)
+        {
+            int score = 0;
+            const uint deadbeefTimestamp = 3688586395; // 0xDEADBEEF
+
+            // ... (your existing characteristics check)
+
+            // Check compile time
+            if (peFile.ImageNtHeaders?.FileHeader?.TimeDateStamp != null)
+            {
+                var timestamp = peFile.ImageNtHeaders.FileHeader.TimeDateStamp;
+
+                // Ignore the 0xDEADBEEF placeholder used by some linkers
+                if (timestamp == deadbeefTimestamp)
+                {
+                    result.MetadataInfo.Add("Compile time is a known placeholder (0xDEADBEEF) [0 points]");
+                }
+                else
+                {
+                    var compileTime = DateTimeOffset.FromUnixTimeSeconds(timestamp).DateTime;
+                    if (compileTime < new DateTime(2000, 1, 1) || compileTime > DateTime.UtcNow.AddDays(1))
+                    {
+                        score += 10;
+                        result.MetadataInfo.Add($"Suspicious compile time: {compileTime} [+10 points]");
+                    }
+                }
+            }
+
+            return score;
+        }
+    } 
 }
