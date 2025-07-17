@@ -5,8 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Management.Automation;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+
 
 namespace NAZARICK_Protocol.service
 {
@@ -113,11 +115,12 @@ namespace NAZARICK_Protocol.service
             (new[] { "IsDebuggerPresent", "CheckRemoteDebuggerPresent", "NtQueryInformationProcess" }, "Anti-Debug Cluster", 25)
         };
 
-        // Trusted certificate subjects (can be expanded)
+        // Trusted certificate subjects
         private static readonly HashSet<string> TrustedSigners = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "Microsoft Corporation",
             "Microsoft Windows",
+            "Microsoft Windows Publisher",
             "Google LLC",
             "Google Inc",
             "Adobe Inc.",
@@ -272,53 +275,125 @@ namespace NAZARICK_Protocol.service
         private int AnalyzeDigitalSignature(string filePath, PEAnalysisResult result)
         {
             int score = 0;
+
             try
             {
-                // 1. Extract the certificate from the signed file.
-                // This throws a CryptographicException if the file is not signed.
-                var cert = X509Certificate.CreateFromSignedFile(filePath);
-                var cert2 = new X509Certificate2(cert); // Use the more capable X509Certificate2 class
+                // PowerShell to get signature info andles both embedded and catalog
+                using (var ps = PowerShell.Create())
+                {
+                    ps.AddCommand("Get-AuthenticodeSignature")
+                      .AddParameter("FilePath", filePath);
 
-                // 2. Create a chain to validate the certificate against the system's trusted roots.
+                    var results = ps.Invoke();
+
+                    if (results.Count > 0)
+                    {
+                        var signature = results[0];
+                        var status = signature.Properties["Status"]?.Value?.ToString();
+                        var signerCert = signature.Properties["SignerCertificate"]?.Value as X509Certificate2;
+
+                        switch (status)
+                        {
+                            case "Valid":
+                                if (signerCert != null)
+                                {
+                                    string subject = signerCert.Subject;
+                                    bool isTrusted = TrustedSigners.Any(trusted =>
+                                        subject.Contains(trusted, StringComparison.OrdinalIgnoreCase));
+
+                                    if (isTrusted)
+                                    {
+                                        score -= 50;
+                                        result.SignatureInfo = $"File has valid signature from trusted entity: {subject} [-50 points]";
+                                    }
+                                    else
+                                    {
+                                        result.SignatureInfo = $"File has valid signature from: {subject} [0 points]";
+                                    }
+                                }
+                                else
+                                {
+                                    score -= 30;
+                                    result.SignatureInfo = "File has valid signature (catalog-signed) [-30 points]";
+                                }
+                                break;
+
+                            case "NotSigned":
+                                score += 20;
+                                result.SignatureInfo = "File is not digitally signed [+20 points]";
+                                break;
+
+                            case "HashMismatch":
+                            case "NotTrusted":
+                            case "UnknownError":
+                                score += 30;
+                                result.SignatureInfo = $"File has invalid signature: {status} [+30 points]";
+                                break;
+
+                            default:
+                                score += 10;
+                                result.SignatureInfo = $"File signature status unknown: {status} [+10 points]";
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        score += 20;
+                        result.SignatureInfo = "Unable to determine signature status [+20 points]";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Fallback to original method if PowerShell fails
+                return AnalyzeDigitalSignatureOriginal(filePath, result);
+            }
+
+            return score;
+        }
+
+        private int AnalyzeDigitalSignatureOriginal(string filePath, PEAnalysisResult result)
+        {
+            // original old method as fallback
+            int score = 0;
+            try
+            {
+                var cert = X509Certificate.CreateFromSignedFile(filePath);
+                var cert2 = new X509Certificate2(cert);
+
                 using (var chain = new X509Chain())
                 {
-                    // 3. Build the chain. This is the primary validation step.
                     bool isChainValid = chain.Build(cert2);
 
-                    // Check if the chain is valid. If not, analyze why.
                     if (!isChainValid)
                     {
                         score += 30;
-                        var status = chain.ChainStatus.FirstOrDefault(); // Get the primary error
+                        var status = chain.ChainStatus.FirstOrDefault();
                         result.SignatureInfo = $"File has an INVALID signature. Reason: {status.StatusInformation.Trim()} [+30 points]";
                         return score;
                     }
 
-                    // 4. If the chain is valid, check if the signer is in our trusted list.
                     string subject = cert2.Subject;
                     bool isTrusted = TrustedSigners.Any(trusted => subject.Contains(trusted, StringComparison.OrdinalIgnoreCase));
 
                     if (isTrusted)
                     {
-                        score -= 50; // Major score reduction for a valid signature from a trusted source.
+                        score -= 50;
                         result.SignatureInfo = $"File signed by a trusted entity: {subject} [-50 points]";
                     }
                     else
                     {
-                        // The signature is valid but the signer is not on our explicit trusted list.
                         result.SignatureInfo = $"File has a valid signature from: {subject} [0 points]";
                     }
                 }
             }
             catch (CryptographicException)
             {
-                // This exception is thrown by CreateFromSignedFile if there's no signature.
                 score += 20;
                 result.SignatureInfo = "File is not digitally signed [+20 points]";
             }
             catch (Exception ex)
             {
-                // Catch any other potential errors during validation.
                 score += 10;
                 result.SignatureInfo = $"An error occurred during signature validation: {ex.Message} [+10 points]";
             }
