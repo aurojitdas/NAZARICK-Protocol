@@ -1,27 +1,17 @@
 ﻿using System;
-
 using System.Collections.Generic;
-
 using System.Linq;
-
 using System.Text;
-
 using System.Threading.Tasks;
 
-
-
 namespace NAZARICK_Protocol.service.Results
-
 {
-
     /// <summary>
     /// Comprehensive result from hybrid analysis
     /// </summary>
 
     public class HybridAnalysisResult
-
     {
-
         public string FilePath { get; set; }
         public string FileName { get; set; }
         public long FileSize { get; set; }
@@ -32,7 +22,6 @@ namespace NAZARICK_Protocol.service.Results
 
         // Entropy Analysis Results
         public double FileEntropy { get; set; }
-
         public int EntropyScore { get; set; }
         public string EntropyAnalysis { get; set; }
 
