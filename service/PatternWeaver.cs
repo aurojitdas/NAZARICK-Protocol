@@ -121,24 +121,7 @@ namespace NAZARICK_Protocol.service
                     scanner = new Scanner();
                 }
 
-                mainWindow.LogMessage("Scanning !!...");
-                //string response = await vt.UploadAndAnalyzeFile(file_path);
-                //await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
-                //if (!string.IsNullOrEmpty(response)) {
-                //    mainWindow.LogMessage(response);
-                // }
-               // VirusTotalFileAnalysisResults? op = vt.ParseFileAnalysis(response);
-               // ShowVirusTotalAnalysisResults(op);
-               
-
-
-                // mainWindow.LogMessage(op.MeaningfulName);
-                // mainWindow.LogMessage(op.IsMalicious.ToString());
-                // mainWindow.LogMessage(op.MaliciousDetections.ToString());
-                // mainWindow.LogMessage(op.ThreatLabel);
-
-                //PEAnalysisResult pr = Pe.Analyze(file_path);
-                //ShowPEAnalysisResults(pr);
+                mainWindow.LogMessage("Scanning !!...");                
 
                 HybridFileAnalyzer hy = new HybridFileAnalyzer();
                 HybridAnalysisResult result = await hy.AnalyzeFile(file_path);
