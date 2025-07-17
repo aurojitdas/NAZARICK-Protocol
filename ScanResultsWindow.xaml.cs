@@ -22,7 +22,8 @@ namespace NAZARICK_Protocol
             scanReports = reports ?? new List<FileScanReport>();
             parentScanWindow = parent;
             this.mainWindow = mainWindow;
-            vt = new VirusTotalAPI("68d9e1716c7df15e701bcce1addafd4231c2d288c5869726ecb9a31ff28ba878", this.mainWindow);           
+            vt = new VirusTotalAPI("68d9e1716c7df15e701bcce1addafd4231c2d288c5869726ecb9a31ff28ba878", this.mainWindow);
+
             LoadResults();
         }
 
@@ -58,7 +59,49 @@ namespace NAZARICK_Protocol
             TotalRulesCount.Text = totalRulesMatched.ToString();
         }
 
-        #region VirusTotal Button Handlers
+        #region Button Handlers
+
+        private void ViewResults_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is string filePath)
+            {
+                // Find the corresponding scan report for this file
+                var scanReport = scanReports.FirstOrDefault(r => r.FilePath == filePath);
+
+                if (scanReport != null)
+                {
+                    // Create a detailed message with scan results
+                    string message = $"Detailed Scan Results for:\n{filePath}\n\n";
+                    message += $"Status: {(scanReport.IsMalicious ? "THREAT DETECTED" : "CLEAN")}\n";
+                    message += $"Rules Matched: {scanReport.MatchedRulesCount}\n\n";
+
+                    if (scanReport.MatchedRules.Any())
+                    {
+                        message += "Matched Rules:\n";
+                        foreach (var rule in scanReport.MatchedRules)
+                        {
+                            message += $"• {rule}\n";
+                        }
+                    }
+                    else
+                    {
+                        message += "No threats detected.";
+                    }
+
+                    // Show popup with results
+                    MessageBox.Show(message, "Scan Results Details",
+                                  MessageBoxButton.OK,
+                                  scanReport.IsMalicious ? MessageBoxImage.Warning : MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show($"No scan results found for:\n{filePath}",
+                                  "Results Not Found",
+                                  MessageBoxButton.OK,
+                                  MessageBoxImage.Information);
+                }
+            }
+        }
 
         private async void SendHashToVT_Click(object sender, RoutedEventArgs e)
         {
@@ -76,6 +119,7 @@ namespace NAZARICK_Protocol
                 {
                     mainWindow.LogMessage(response);
                 }
+
                 VirusTotalFileAnalysisResults? op = vt.ParseFileAnalysis(response);
                 if (op != null)
                 {
@@ -95,7 +139,7 @@ namespace NAZARICK_Protocol
                 resultsWindow.ShowLoading("Uploading and analyzing file...");
 
                 string response = await vt.UploadAndAnalyzeFile(filePath);
-                
+
                 if (!string.IsNullOrEmpty(response))
                 {
                     VirusTotalFileAnalysisResults? op = vt.ParseFileAnalysis(response);
@@ -104,7 +148,7 @@ namespace NAZARICK_Protocol
                         resultsWindow.DisplayAnalysisResult(op);
                     }
                 }
-            }                
+            }
         }
 
         #endregion
@@ -126,6 +170,5 @@ namespace NAZARICK_Protocol
         }
 
         #endregion
-       
     }
 }

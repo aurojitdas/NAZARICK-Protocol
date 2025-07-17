@@ -131,11 +131,12 @@
                         BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
                     <Grid Height="40">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="400"/>
+                            <ColumnDefinition Width="300"/>
                             <ColumnDefinition Width="80"/>
                             <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="140"/>
                             <ColumnDefinition Width="200"/>
-                            <ColumnDefinition Width="150"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="File Path" FontWeight="SemiBold"
                                    VerticalAlignment="Center" Margin="15,0,0,0" FontSize="13"/>
@@ -145,7 +146,9 @@
                                    VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="13"/>
                         <TextBlock Grid.Column="3" Text="Detected Threats" FontWeight="SemiBold"
                                    VerticalAlignment="Center" Margin="15,0,0,0" FontSize="13"/>
-                        <TextBlock Grid.Column="4" Text="VirusTotal Actions" FontWeight="SemiBold"
+                        <TextBlock Grid.Column="4" Text="Results" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="13"/>
+                        <TextBlock Grid.Column="5" Text="VirusTotal Actions" FontWeight="SemiBold"
                                    VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="13"/>
                     </Grid>
                 </Border>
@@ -166,11 +169,12 @@
                                                     Padding="0,10">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="400"/>
+                                                        <ColumnDefinition Width="300"/>
                                                         <ColumnDefinition Width="80"/>
                                                         <ColumnDefinition Width="100"/>
+                                                        <ColumnDefinition Width="130"/>
+                                                        <ColumnDefinition Width="140"/>
                                                         <ColumnDefinition Width="200"/>
-                                                        <ColumnDefinition Width="150"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Grid.Column="0" Text="{Binding FilePath}"
                                                                VerticalAlignment="Center" Margin="15,0,10,0"
@@ -192,10 +196,21 @@
                                                                VerticalAlignment="Center" Margin="15,0,10,0"
                                                                TextWrapping="Wrap" FontSize="13"
                                                                ToolTip="{Binding ThreatsList}"/>
-                                                    <!-- VirusTotal Buttons -->
+                                                    <!-- Results Column -->
                                                     <StackPanel Grid.Column="4" Orientation="Horizontal"
                                                                 HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                        <Button Content="Send Hash" Width="70" Height="28"
+                                                        <Button Content="View Results" Width="90" Height="28"
+                                                                Background="#28a745" Foreground="White"
+                                                                BorderThickness="0" FontSize="10"
+                                                                Style="{StaticResource VTButtonStyle}"
+                                                                Click="ViewResults_Click"
+                                                                Tag="{Binding FilePath}"
+                                                                ToolTip="View detailed scan results"/>
+                                                    </StackPanel>
+                                                    <!-- VirusTotal Actions Column -->
+                                                    <StackPanel Grid.Column="5" Orientation="Horizontal"
+                                                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                        <Button Content="Send Hash" Width="90" Height="28"
                                                                 Background="#FF6B35" Foreground="White"
                                                                 BorderThickness="0" FontSize="10"
                                                                 Style="{StaticResource VTButtonStyle}"
@@ -203,7 +218,7 @@
                                                                 Click="SendHashToVT_Click"
                                                                 Tag="{Binding FilePath}"
                                                                 ToolTip="Send file hash to VirusTotal"/>
-                                                        <Button Content="Send File" Width="70" Height="28"
+                                                        <Button Content="Send File" Width="90" Height="28"
                                                                 Background="#0078D4" Foreground="White"
                                                                 BorderThickness="0" FontSize="10"
                                                                 Style="{StaticResource VTButtonStyle}"
