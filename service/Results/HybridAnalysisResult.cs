@@ -15,9 +15,7 @@ namespace NAZARICK_Protocol.service.Results
 {
 
     /// <summary>
-
     /// Comprehensive result from hybrid analysis
-
     /// </summary>
 
     public class HybridAnalysisResult
