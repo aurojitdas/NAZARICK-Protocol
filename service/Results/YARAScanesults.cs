@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace NAZARICK_Protocol.service.Results{
     
-    public class FileScanReport
+    public class YARAScanReport
     {
        
         public string FilePath { get; }
@@ -11,15 +11,20 @@ namespace NAZARICK_Protocol.service.Results{
         public List<string> MatchedRules { get; }
         
         public int MatchedRulesCount => MatchedRules.Count;
-        
-        public bool IsMalicious => MatchedRules.Any();
+
+        public bool? OverrideMaliciousFlag { get; set; }
+        public bool IsMalicious => OverrideMaliciousFlag ?? MatchedRules.Any();
+
+
+      
+
 
         /// <summary>
         /// Initializes a new instance of the FileScanReport class.
         /// </summary>
         /// <param name="filePath">The path to the scanned file.</param>
         /// <param name="scanResults">The list of scan results from dnYara.</param>
-        public FileScanReport(string filePath, List<dnYara.ScanResult> scanResults)
+        public YARAScanReport(string filePath, List<dnYara.ScanResult> scanResults)
         {
             FilePath = filePath;
             MatchedRules = scanResults?.Select(r => r.MatchingRule.Identifier).ToList() ?? new List<string>();

@@ -11,15 +11,15 @@ namespace NAZARICK_Protocol
 {
     public partial class ScanResultsWindow : Window
     {
-        private List<FileScanReport> scanReports;
+        private List<YARAScanReport> scanReports;
         private ScanWindow parentScanWindow;
         private MainWindow mainWindow;
         private VirusTotalAPI vt;
 
-        public ScanResultsWindow(List<FileScanReport> reports, ScanWindow parent, MainWindow mainWindow)
+        public ScanResultsWindow(List<YARAScanReport> reports, ScanWindow parent, MainWindow mainWindow)
         {
             InitializeComponent();
-            scanReports = reports ?? new List<FileScanReport>();
+            scanReports = reports ?? new List<YARAScanReport>();
             parentScanWindow = parent;
             this.mainWindow = mainWindow;
             vt = new VirusTotalAPI("68d9e1716c7df15e701bcce1addafd4231c2d288c5869726ecb9a31ff28ba878", this.mainWindow);

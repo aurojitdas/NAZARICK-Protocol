@@ -16,7 +16,7 @@ namespace NAZARICK_Protocol
         private MainWindow _mainWindow;
 
         // Store scan results
-        private List<FileScanReport> scanResults = new List<FileScanReport>();
+        private List<YARAScanReport> scanResults = new List<YARAScanReport>();
 
         // Expandable sections state
         private bool itemsDetailsExpanded = true;
@@ -142,7 +142,7 @@ namespace NAZARICK_Protocol
         /// Add a scan result to the results list
         /// </summary>
         /// <param name="scanReport">FileScanReport to add</param>
-        public void AddScanResult(FileScanReport scanReport)
+        public void AddScanResult(YARAScanReport scanReport)
         {
             Dispatcher.Invoke(() =>
             {
