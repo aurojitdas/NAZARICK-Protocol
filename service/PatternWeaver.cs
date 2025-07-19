@@ -23,7 +23,7 @@ namespace NAZARICK_Protocol.service
         private ScanWindow currentScanWindow;
         private VirusTotalAPI vt;
         PEAnalyzer Pe;
-        FileScanReport scanReport;
+        YARAScanReport scanReport;
 
         public PatternWeaver(MainWindow mainWindow)
         {
@@ -124,15 +124,25 @@ namespace NAZARICK_Protocol.service
                 mainWindow.LogMessage("Scanning !!...");                
 
                 HybridFileAnalyzer hy = new HybridFileAnalyzer();
-                HybridAnalysisResult result = await hy.AnalyzeFile(file_path);
-               mainWindow.LogMessage(result.ToString());
+                HybridAnalysisResult hybridResult = await hy.AnalyzeFile(file_path);
+                mainWindow.LogMessage(hybridResult.ToString());
 
                 currentScanWindow.UpdateCurrentFile(file_path);
                 scanResults = scanner.ScanFile(file_path, rules);
                 currentScanWindow.AddFilesScanned();
 
                 // Create scan report and add to scan window
-                FileScanReport scanReport = new FileScanReport(file_path, scanResults);
+                YARAScanReport scanReport = new YARAScanReport(file_path, scanResults);
+
+               
+                bool hybridThreatsFound = IsHybridThreatDetected(hybridResult);
+
+                // If any threats detected, 
+                if (hybridThreatsFound)
+                {
+                    scanReport.OverrideMaliciousFlag = true;
+                }
+
                 currentScanWindow.AddScanResult(scanReport);
 
                 mainWindow.LogMessage("Scan SUCCESS!!...");
@@ -165,7 +175,7 @@ namespace NAZARICK_Protocol.service
                     currentScanWindow.UpdateCurrentFile(file);
                     scanResults = scanner.ScanFile(file, rules);
                     currentScanWindow.AddFilesScanned();
-                    scanReport = new FileScanReport(file,scanResults);
+                    scanReport = new YARAScanReport(file,scanResults);
                     currentScanWindow.AddScanResult(scanReport);
                     displayScanResults(scanResults, file);
                 }
@@ -180,6 +190,89 @@ namespace NAZARICK_Protocol.service
             }
 
         }
+
+        public async Task scanFile_RealTimeMonitor(String file_path)
+        {
+           
+            List<ScanResult> scanResults;
+            if (file_path != null)
+            {
+                if (scanner != null) { }
+                else
+                {
+                    scanner = new Scanner();
+                }
+
+                mainWindow.LogMessage("Scanning !!...");
+
+                HybridFileAnalyzer hy = new HybridFileAnalyzer();
+                HybridAnalysisResult hybridResult = await hy.AnalyzeFile(file_path);
+                //mainWindow.LogMessage(result.ToString());
+
+                scanResults = scanner.ScanFile(file_path, rules);
+                
+
+                // Create scan report and add to scan window
+                YARAScanReport scanReport = new YARAScanReport(file_path, scanResults);
+
+                // Check if either analysis found threats
+                bool yaraThreatsFound = scanReport.IsMalicious;
+                bool hybridThreatsFound = IsHybridThreatDetected(hybridResult);
+
+                // If any threats detected, show alert window
+                if (yaraThreatsFound || hybridThreatsFound)
+                {
+                    scanReport.OverrideMaliciousFlag = true;
+
+                }
+
+                mainWindow.LogMessage($"Real-time scan completed: {Path.GetFileName(file_path)}");
+                mainWindow.LogMessage("Scan SUCCESS!!...");           
+
+            }
+            else
+            {
+                mainWindow.LogMessage("Scan Cancelled!!...");
+            }
+
+        }
+        /// <summary>
+        /// Determines if the hybrid analysis detected any threats based on analyzer's scoring system
+        /// </summary>
+        private bool IsHybridThreatDetected(HybridAnalysisResult hybridResult)
+        {
+            if (hybridResult == null) return false;
+
+            // Check threat level
+            if (hybridResult.FinalThreatLevel != null)
+            {
+                string threatLevel = hybridResult.FinalThreatLevel.ToUpper();
+
+                // Considers MEDIUM, HIGH, CRITICAL as threats
+                if (threatLevel == "CRITICAL" ||
+                    threatLevel == "HIGH" ||
+                    threatLevel == "MEDIUM")
+                {
+                    return true;
+                }
+            }
+
+            // Check if total score exceeds MEDIUM threshold (40+ is considered suspicious)
+            if (hybridResult.TotalScore >= 40)
+            {
+                return true;
+            }
+
+            // Check for cross-analysis findings
+            if (hybridResult.CrossAnalysisFindings != null && hybridResult.CrossAnalysisFindings.Any())
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+
 
         public void cleanup()
         {
