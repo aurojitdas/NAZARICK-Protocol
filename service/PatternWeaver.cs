@@ -132,7 +132,7 @@ namespace NAZARICK_Protocol.service
                 currentScanWindow.AddFilesScanned();
 
                 // Create scan report and add to scan window
-                YARAScanReport scanReport = new YARAScanReport(file_path, scanResults);
+                YARAScanReport scanReport = new YARAScanReport(file_path, scanResults,hybridResult);
 
                
                 bool hybridThreatsFound = IsHybridThreatDetected(hybridResult);
@@ -140,7 +140,7 @@ namespace NAZARICK_Protocol.service
                 // If any threats detected, 
                 if (hybridThreatsFound)
                 {
-                    scanReport.OverrideMaliciousFlag = true;
+                    scanReport.isHybridThreatDetected = true;
                 }
 
                 currentScanWindow.AddScanResult(scanReport);
@@ -172,16 +172,24 @@ namespace NAZARICK_Protocol.service
                 mainWindow.LogMessage("Scanning !!...");
                 foreach (string file in files)
                 {
+                    HybridFileAnalyzer hy = new HybridFileAnalyzer();
+                    HybridAnalysisResult hybridResult = await hy.AnalyzeFile(file);
                     currentScanWindow.UpdateCurrentFile(file);
                     scanResults = scanner.ScanFile(file, rules);
                     currentScanWindow.AddFilesScanned();
-                    scanReport = new YARAScanReport(file,scanResults);
+                    scanReport = new YARAScanReport(file,scanResults, hybridResult);
+                    bool hybridThreatsFound = IsHybridThreatDetected(hybridResult);
+                    // If any threats detected, 
+                    if (hybridThreatsFound)
+                    {
+                        scanReport.isHybridThreatDetected = true;
+                    }
+
                     currentScanWindow.AddScanResult(scanReport);
                     displayScanResults(scanResults, file);
                 }
                 currentScanWindow.CompleteScan();              
-                mainWindow.LogMessage("Scan SUCCESS!!...");               
-               
+                mainWindow.LogMessage("Scan SUCCESS!!...");                  
 
             }
             else
@@ -209,20 +217,19 @@ namespace NAZARICK_Protocol.service
                 HybridAnalysisResult hybridResult = await hy.AnalyzeFile(file_path);
                 //mainWindow.LogMessage(result.ToString());
 
-                scanResults = scanner.ScanFile(file_path, rules);
-                
+                scanResults = scanner.ScanFile(file_path, rules);                
 
                 // Create scan report and add to scan window
-                YARAScanReport scanReport = new YARAScanReport(file_path, scanResults);
+                YARAScanReport scanReport = new YARAScanReport(file_path, scanResults,hybridResult);
 
                 // Check if either analysis found threats
-                bool yaraThreatsFound = scanReport.IsMalicious;
+                bool yaraThreatsFound = scanReport.isYaraThreatDetected;
                 bool hybridThreatsFound = IsHybridThreatDetected(hybridResult);
 
                 // If any threats detected, show alert window
                 if (yaraThreatsFound || hybridThreatsFound)
                 {
-                    scanReport.OverrideMaliciousFlag = true;
+                    scanReport.isHybridThreatDetected = true;
 
                 }
 

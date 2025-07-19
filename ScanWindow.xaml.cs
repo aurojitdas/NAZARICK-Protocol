@@ -18,6 +18,7 @@ namespace NAZARICK_Protocol
         // Store scan results
         private List<YARAScanReport> scanResults = new List<YARAScanReport>();
 
+
         // Expandable sections state
         private bool itemsDetailsExpanded = true;
 

@@ -29,7 +29,7 @@ namespace NAZARICK_Protocol.service.Results
         public int TotalScore { get; set; }
         public string FinalThreatLevel { get; set; }
         public string Confidence { get; set; }
-        public string SizeAnalysis { get; set; }
+        public string SizeAnalysis { get; set; }       
 
         // Cross-analysis findings
         public List<string> CrossAnalysisFindings { get; set; } = new List<string>();

@@ -33,9 +33,9 @@ namespace NAZARICK_Protocol
             var displayResults = scanReports.Select(r => new
             {
                 FilePath = r.FilePath,
-                StatusText = r.IsMalicious ? "THREAT" : "CLEAN",
-                StatusBackground = r.IsMalicious ? new SolidColorBrush(Color.FromRgb(255, 230, 230)) : new SolidColorBrush(Color.FromRgb(230, 255, 230)),
-                StatusForeground = r.IsMalicious ? new SolidColorBrush(Color.FromRgb(220, 53, 69)) : new SolidColorBrush(Color.FromRgb(40, 167, 69)),
+                StatusText = (r.isYaraThreatDetected || r.isHybridThreatDetected == true) ? "THREAT" : "CLEAN",
+                StatusBackground = (r.isYaraThreatDetected || r.isHybridThreatDetected == true) ? new SolidColorBrush(Color.FromRgb(255, 230, 230)) : new SolidColorBrush(Color.FromRgb(230, 255, 230)),
+                StatusForeground = (r.isYaraThreatDetected || r.isHybridThreatDetected == true) ? new SolidColorBrush(Color.FromRgb(220, 53, 69)) : new SolidColorBrush(Color.FromRgb(40, 167, 69)),
                 MatchedRulesCount = r.MatchedRulesCount,
                 ThreatsList = r.MatchedRules.Any() ? string.Join(", ", r.MatchedRules) : "None"
             }).ToList();
@@ -45,7 +45,7 @@ namespace NAZARICK_Protocol
 
             // Update summary statistics
             int totalFiles = scanReports.Count;
-            int maliciousFiles = scanReports.Count(r => r.IsMalicious);
+            int maliciousFiles = scanReports.Count(r => r.isYaraThreatDetected);
             int cleanFiles = totalFiles - maliciousFiles;
             int totalRulesMatched = scanReports.Sum(r => r.MatchedRulesCount);
 
@@ -70,28 +70,8 @@ namespace NAZARICK_Protocol
 
                 if (scanReport != null)
                 {
-                    // Create a detailed message with scan results
-                    string message = $"Detailed Scan Results for:\n{filePath}\n\n";
-                    message += $"Status: {(scanReport.IsMalicious ? "THREAT DETECTED" : "CLEAN")}\n";
-                    message += $"Rules Matched: {scanReport.MatchedRulesCount}\n\n";
-
-                    if (scanReport.MatchedRules.Any())
-                    {
-                        message += "Matched Rules:\n";
-                        foreach (var rule in scanReport.MatchedRules)
-                        {
-                            message += $"• {rule}\n";
-                        }
-                    }
-                    else
-                    {
-                        message += "No threats detected.";
-                    }
-
-                    // Show popup with results
-                    MessageBox.Show(message, "Scan Results Details",
-                                  MessageBoxButton.OK,
-                                  scanReport.IsMalicious ? MessageBoxImage.Warning : MessageBoxImage.Information);
+                    // Show the comprehensive full report window
+                    FullReportWindow.ShowFullReport(scanReport, this);
                 }
                 else
                 {

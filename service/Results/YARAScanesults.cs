@@ -9,11 +9,12 @@ namespace NAZARICK_Protocol.service.Results{
         public string FilePath { get; }
 
         public List<string> MatchedRules { get; }
-        
+        public HybridAnalysisResult HybridResult { get; set; }
+
         public int MatchedRulesCount => MatchedRules.Count;
 
-        public bool? OverrideMaliciousFlag { get; set; }
-        public bool IsMalicious => OverrideMaliciousFlag ?? MatchedRules.Any();
+        public bool? isHybridThreatDetected { get; set; }
+        public bool isYaraThreatDetected => MatchedRules.Any();
 
 
       
@@ -24,15 +25,18 @@ namespace NAZARICK_Protocol.service.Results{
         /// </summary>
         /// <param name="filePath">The path to the scanned file.</param>
         /// <param name="scanResults">The list of scan results from dnYara.</param>
-        public YARAScanReport(string filePath, List<dnYara.ScanResult> scanResults)
+        public YARAScanReport(string filePath, List<dnYara.ScanResult> scanResults, HybridAnalysisResult hybridResult)
         {
             FilePath = filePath;
             MatchedRules = scanResults?.Select(r => r.MatchingRule.Identifier).ToList() ?? new List<string>();
+            HybridResult = hybridResult;
         }
 
         public override string ToString()
+
+
         {
-            if (!IsMalicious)
+            if (!isYaraThreatDetected)
             {
                 return $"File: {FilePath}\nResult: No threats detected.";
             }
