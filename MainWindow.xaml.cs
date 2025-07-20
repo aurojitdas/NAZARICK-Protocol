@@ -310,14 +310,22 @@ namespace NAZARICK_Protocol
             }
         }
 
-        private void Monitor_FileChanged(string filePath)
+        private async void Monitor_FileChanged(string filePath)
         {
-            // This event handler is executed on a background thread from the FileSystemWatcher.            
-             this.Dispatcher.Invoke(() => 
+                     
+            await this.Dispatcher.InvokeAsync(async () =>
             {
-                LogMessage($"File changed: {filePath}");
-                // pw.scanFile(filePath);
-            });                    
+                LogMessage($"[REAL-TIME] File change detected: {System.IO.Path.GetFileName(filePath)}");
+
+                try
+                {
+                    await pw.scanFile_RealTimeMonitor(filePath);
+                }
+                catch (Exception ex)
+                {
+                    LogMessage($"[ERROR] Real-time scan failed: {ex.Message}");
+                }
+            });
         }
 
         /// <summary>

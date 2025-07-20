@@ -53,7 +53,7 @@ namespace NAZARICK_Protocol.service
                 mainWindow.LogMessage($"Error: Folder '{absoluteFolderPath}' does not exist.");
                 
             }
-
+            mainWindow.LogMessage("Loading YARA rules...");
             try
             {               
                 var ruleFiles = Directory.EnumerateFiles(absoluteFolderPath, "*.yar", SearchOption.AllDirectories)
@@ -70,7 +70,7 @@ namespace NAZARICK_Protocol.service
                 {
                     try
                     {
-                        mainWindow.LogMessage("Loading YARA rules...");
+                       
                         if (compiler != null)
                         {
 
@@ -229,7 +229,12 @@ namespace NAZARICK_Protocol.service
                 // If any threats detected, show alert window
                 if (yaraThreatsFound || hybridThreatsFound)
                 {
+                   // ShowScanWindow(mainWindow);
                     scanReport.isHybridThreatDetected = true;
+                    mainWindow.LogMessage($"REAL-TIME THREAT DETECTED: {Path.GetFileName(file_path)}");
+                    //displayScanResults(scanResults, file_path);
+                    ShowRealTimeResults(scanReport);
+
 
                 }
 
@@ -320,7 +325,7 @@ namespace NAZARICK_Protocol.service
             mainWindow.ScanInfoTextBox.ScrollToEnd();
         }
 
-        private void displayScanResults(List<ScanResult> scanResults,string filepath)
+        private void displayScanResults(List<ScanResult> scanResults, string filepath)
         {
             if (scanResults != null && scanResults.Count > 0)
             {
@@ -328,8 +333,13 @@ namespace NAZARICK_Protocol.service
                 foreach (var result in scanResults)
                 {
                     mainWindow.LogMessage($"Rule matched: {result.MatchingRule.Identifier}\n");
-                    mainWindow.ReportThreatDetected(result.MatchingRule.Identifier,filepath);
-                    currentScanWindow.ReportThreatDetected(result.MatchingRule.Identifier,filepath);
+                    mainWindow.ReportThreatDetected(result.MatchingRule.Identifier, filepath);
+
+                    // Only call currentScanWindow if it exists (for manual scans)
+                    if (currentScanWindow != null)
+                    {
+                        currentScanWindow.ReportThreatDetected(result.MatchingRule.Identifier, filepath);
+                    }
                 }
                 mainWindow.LogMessage($"Total rules matched: {scanResults.Count}\n");
             }
@@ -352,7 +362,29 @@ namespace NAZARICK_Protocol.service
         private void ShowPEAnalysisResults(PEAnalysisResult analysisResult)
         {
             PEAnalysisResultsWindow.ShowAnalysisResults(analysisResult, this.mainWindow);
-        }        
+        }
+
+        /// <summary>
+        /// Show real-time scan results using existing ScanResultsWindow
+        /// </summary>
+        private void ShowRealTimeResults(YARAScanReport scanReport)
+        {
+            // Create a dummy scan window for the results system
+            var dummyScanWindow = new ScanWindow(mainWindow);
+            dummyScanWindow.Hide(); // Hide it since we don't need to show it
+
+            // Create results window with single result
+            var singleResultList = new List<YARAScanReport> { scanReport };
+            ScanResultsWindow resultsWindow = new ScanResultsWindow(singleResultList, dummyScanWindow, mainWindow);
+           
+            //resultsWindow.Title = "N.A.Z.A.R.I.C.K. Protocol - Real-Time Threat Detected";
+
+            // Show the results window
+            resultsWindow.Show();
+
+            // Bring to front and focus
+            
+        }
     }
 
 }
