@@ -14,7 +14,7 @@ namespace NAZARICK_Protocol
         {
             base.OnStartup(e);
 
-            MainWindow mainWindow = new MainWindow();
+             //MainWindow mainWindow = new MainWindow();
             //mainWindow.Show();
         }
     }
