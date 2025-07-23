@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Threading;
 using NAZARICK_Protocol.service.Results;
+using System.Diagnostics;
 
 namespace NAZARICK_Protocol
 {
@@ -18,15 +19,22 @@ namespace NAZARICK_Protocol
         // Store scan results
         private List<YARAScanReport> scanResults = new List<YARAScanReport>();
 
+        // Timing and performance tracking
+        private DateTime scanStartTime;
+        private List<float> cpuReadings = new List<float>();
+        private PerformanceCounter cpuCounter;
+        private System.Threading.Thread performanceThread;
+        private bool shouldUpdatePerformance = false;
 
         // Expandable sections state
-        private bool itemsDetailsExpanded = true;
+        private bool statsDetailsExpanded = true;
 
         public ScanWindow(MainWindow mainWindow)
         {
             _mainWindow = mainWindow;
             InitializeComponent();
             InitializeScan();
+            InitializePerformanceTracking();
         }
 
         private void InitializeScan()
@@ -41,6 +49,99 @@ namespace NAZARICK_Protocol
             ScanProgressBar.IsIndeterminate = true;
         }
 
+        private void InitializePerformanceTracking()
+        {
+            try
+            {
+                // Initialize CPU counter for this scan window
+                cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+                cpuCounter.NextValue(); // Prime the counter
+                System.Threading.Thread.Sleep(100); // Small delay to let counter stabilize
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the scan
+                _mainWindow.LogMessage($"[WARNING] CPU monitoring unavailable: {ex.Message}");
+                cpuCounter = null;
+            }
+        }
+
+        private void StartPerformanceMonitoring()
+        {
+            shouldUpdatePerformance = true;
+            performanceThread = new System.Threading.Thread(() =>
+            {
+                while (shouldUpdatePerformance && isScanning)
+                {
+                    try
+                    {
+                        if (scanStartTime != default(DateTime))
+                        {
+                            // Update elapsed time
+                            TimeSpan elapsed = DateTime.Now - scanStartTime;
+                            Dispatcher.Invoke(() =>
+                            {
+                                ElapsedTimeText.Text = $"{elapsed.Minutes:D2}:{elapsed.Seconds:D2}";
+                            });
+
+                            // Update CPU usage
+                            if (cpuCounter != null)
+                            {
+                                try
+                                {
+                                    float cpuUsage = cpuCounter.NextValue();
+                                    if (cpuUsage >= 0 && cpuUsage <= 100)
+                                    {
+                                        cpuReadings.Add(cpuUsage);
+
+                                        if (cpuReadings.Count > 0)
+                                        {
+                                            float average = 0;
+                                            foreach (float reading in cpuReadings)
+                                            {
+                                                average += reading;
+                                            }
+                                            average /= cpuReadings.Count;
+
+                                            Dispatcher.Invoke(() =>
+                                            {
+                                                AvgCpuUsageText.Text = $"{average:F1}%";
+                                            });
+                                        }
+                                    }
+                                }
+                                catch
+                                {
+                                    // Ignore CPU reading errors
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore any errors in background thread
+                    }
+
+                    // Sleep for 1 second before next update
+                    System.Threading.Thread.Sleep(1000);
+                }
+            })
+            {
+                IsBackground = true
+            };
+
+            performanceThread.Start();
+        }
+
+        private void StopPerformanceMonitoring()
+        {
+            shouldUpdatePerformance = false;
+            if (performanceThread != null && performanceThread.IsAlive)
+            {
+                performanceThread.Join(2000); // Wait up to 2 seconds for thread to finish
+            }
+        }
+
         #region Public Methods for External Scanning Integration
 
         /// <summary>
@@ -51,6 +152,9 @@ namespace NAZARICK_Protocol
             Dispatcher.Invoke(() =>
             {
                 isScanning = true;
+                scanStartTime = DateTime.Now;
+                cpuReadings.Clear();
+
                 ScanStatusText.Text = "Scanning for threats...";
                 ScanProgressBar.IsIndeterminate = true;
                 StopButton.Content = "Stop Scan";
@@ -58,6 +162,13 @@ namespace NAZARICK_Protocol
                 // Clear previous results
                 scanResults.Clear();
                 ShowResultsButton.Visibility = Visibility.Collapsed;
+
+                // Reset UI
+                ElapsedTimeText.Text = "00:00";
+                AvgCpuUsageText.Text = "0%";
+
+                // Start performance monitoring in background thread
+                StartPerformanceMonitoring();
             });
         }
 
@@ -194,6 +305,16 @@ namespace NAZARICK_Protocol
             {
                 isScanning = false;
 
+                // Stop performance monitoring
+                StopPerformanceMonitoring();
+
+                // Show final elapsed time
+                if (scanStartTime != default(DateTime))
+                {
+                    TimeSpan totalElapsed = DateTime.Now - scanStartTime;
+                    ElapsedTimeText.Text = $"{totalElapsed.Minutes:D2}:{totalElapsed.Seconds:D2}";
+                }
+
                 ScanStatusText.Text = message;
                 ScanProgressBar.IsIndeterminate = false;
                 ScanProgressBar.Value = 100;
@@ -213,6 +334,10 @@ namespace NAZARICK_Protocol
             Dispatcher.Invoke(() =>
             {
                 isScanning = false;
+
+                // Stop performance monitoring
+                StopPerformanceMonitoring();
+
                 ScanStatusText.Text = "Scan stopped by user";
                 ScanProgressBar.IsIndeterminate = false;
                 CurrentFileText.Text = "Scan stopped";
@@ -231,8 +356,12 @@ namespace NAZARICK_Protocol
                 foldersScanned = 0;
                 dataSizeScanned = 0;
                 infectedFiles = 0;
+                cpuReadings.Clear();
                 scanResults.Clear();
                 ShowResultsButton.Visibility = Visibility.Collapsed;
+
+                ElapsedTimeText.Text = "00:00";
+                AvgCpuUsageText.Text = "0%";
 
                 UpdateScanCounts();
             });
@@ -249,9 +378,6 @@ namespace NAZARICK_Protocol
 
         private void UpdateScanCounts()
         {
-            // Update totals
-            int totalItems = filesScanned + foldersScanned;
-            TotalItemsText.Text = totalItems.ToString("N0");
             FilesCountText.Text = filesScanned.ToString("N0");
             FoldersCountText.Text = foldersScanned.ToString("N0");
 
@@ -285,8 +411,8 @@ namespace NAZARICK_Protocol
 
         private void UpdateExpandableIcons()
         {
-            ItemsExpandIcon.Text = itemsDetailsExpanded ? "▼" : "▲";
-            ItemsDetailsPanel.Visibility = itemsDetailsExpanded ? Visibility.Visible : Visibility.Collapsed;
+            StatsExpandIcon.Text = statsDetailsExpanded ? "▼" : "▲";
+            StatsDetailsPanel.Visibility = statsDetailsExpanded ? Visibility.Visible : Visibility.Collapsed;
         }
 
         #endregion
@@ -311,9 +437,9 @@ namespace NAZARICK_Protocol
             }
         }
 
-        private void ToggleItemsScanned_Click(object sender, RoutedEventArgs e)
+        private void ToggleScanStats_Click(object sender, RoutedEventArgs e)
         {
-            itemsDetailsExpanded = !itemsDetailsExpanded;
+            statsDetailsExpanded = !statsDetailsExpanded;
             UpdateExpandableIcons();
         }
 
@@ -325,7 +451,6 @@ namespace NAZARICK_Protocol
             // Open the scan results window
             var resultsWindow = new ScanResultsWindow(scanResults, this, this._mainWindow);
             resultsWindow.Show();
-
         }
 
         private void StopButton_Click(object sender, RoutedEventArgs e)
@@ -347,10 +472,27 @@ namespace NAZARICK_Protocol
 
         protected override void OnClosed(EventArgs e)
         {
-            if (isScanning)
+            try
             {
-                StopScan();
+                if (isScanning)
+                {
+                    StopScan();
+                }
+
+                // Clean up resources
+                StopPerformanceMonitoring();
+
+                if (cpuCounter != null)
+                {
+                    cpuCounter.Dispose();
+                    cpuCounter = null;
+                }
             }
+            catch (Exception ex)
+            {
+                _mainWindow.LogMessage($"[WARNING] Cleanup error: {ex.Message}");
+            }
+
             base.OnClosed(e);
         }
 
