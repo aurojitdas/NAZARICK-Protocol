@@ -440,27 +440,60 @@ namespace NAZARICK_Protocol.service
         private int AnalyzeMetadata(PeFile peFile, PEAnalysisResult result)
         {
             int score = 0;
-            const uint deadbeefTimestamp = 3688586395; // 0xDEADBEEF
-
-            // ... (your existing characteristics check)
+            const uint deadbeefTimestamp = 0xDEADBEEF; // Correct value
 
             // Check compile time
             if (peFile.ImageNtHeaders?.FileHeader?.TimeDateStamp != null)
             {
                 var timestamp = peFile.ImageNtHeaders.FileHeader.TimeDateStamp;
 
-                // Ignore the 0xDEADBEEF placeholder used by some linkers
+                // Debug: Log the actual timestamp value
+               // result.MetadataInfo.Add($"Raw timestamp: {timestamp} (0x{timestamp:X8})");
+
+                // Check for common placeholder values
                 if (timestamp == deadbeefTimestamp)
                 {
                     result.MetadataInfo.Add("Compile time is a known placeholder (0xDEADBEEF) [0 points]");
                 }
+                else if (timestamp == 0)
+                {
+                    score += 15;
+                    result.MetadataInfo.Add("Compile time is zero (suspicious) [+15 points]");
+                }
                 else
                 {
-                    var compileTime = DateTimeOffset.FromUnixTimeSeconds(timestamp).DateTime;
-                    if (compileTime < new DateTime(2000, 1, 1) || compileTime > DateTime.UtcNow.AddDays(1))
+                    try
+                    {
+                        // PE timestamps are seconds since January 1, 1970 00:00:00 UTC
+                        var compileTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                            .AddSeconds(timestamp);
+
+                        var compileTimeLocal = compileTime.ToLocalTime();
+                        var now = DateTime.UtcNow;
+
+                        // More reasonable date range
+                        var minDate = new DateTime(1990, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                        var maxDate = now.AddDays(30); // Allow some future dates for build systems
+
+                        if (compileTime < minDate)
+                        {
+                            score += 20;
+                            result.MetadataInfo.Add($"Suspicious compile time (too old): {compileTimeLocal:yyyy-MM-dd HH:mm:ss} [+20 points]");
+                        }
+                        else if (compileTime > maxDate)
+                        {
+                            score += 25;
+                            result.MetadataInfo.Add($"Suspicious compile time (future date): {compileTimeLocal:yyyy-MM-dd HH:mm:ss} [+25 points]");
+                        }
+                        else
+                        {
+                            result.MetadataInfo.Add($"Compile time: {compileTimeLocal:yyyy-MM-dd HH:mm:ss} [0 points]");
+                        }
+                    }
+                    catch (Exception ex)
                     {
                         score += 10;
-                        result.MetadataInfo.Add($"Suspicious compile time: {compileTime} [+10 points]");
+                        result.MetadataInfo.Add($"Invalid timestamp: 0x{timestamp:X8} - {ex.Message} [+10 points]");
                     }
                 }
             }
