@@ -121,63 +121,71 @@ namespace NAZARICK_Protocol.service
                     scanner = new Scanner();
                 }
 
-                mainWindow.LogMessage("Scanning !!...");                
+                mainWindow.LogMessage("Scanning !!...");
 
-                HybridFileAnalyzer hy = new HybridFileAnalyzer();
-                HybridAnalysisResult hybridResult = await hy.AnalyzeFile(file_path);
-                mainWindow.LogMessage(hybridResult.ToString());
-
-                currentScanWindow.UpdateCurrentFile(file_path);
-
-                // Get file size and add to data scanned
-                try
+                // Move scanning work to background thread
+                await Task.Run(async () =>
                 {
-                    FileInfo fileInfo = new FileInfo(file_path);
-                    if (fileInfo.Exists)
+                    try
                     {
-                        currentScanWindow.AddDataScanned(fileInfo.Length);
+                        HybridFileAnalyzer hy = new HybridFileAnalyzer();
+                        HybridAnalysisResult hybridResult = await hy.AnalyzeFile(file_path);
+                        mainWindow.LogMessage(hybridResult.ToString());
+
+                        currentScanWindow.UpdateCurrentFile(file_path);
+
+                        // Get file size and add to data scanned
+                        try
+                        {
+                            FileInfo fileInfo = new FileInfo(file_path);
+                            if (fileInfo.Exists)
+                            {
+                                currentScanWindow.AddDataScanned(fileInfo.Length);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            mainWindow.LogMessage($"Error getting file size for {file_path}: {ex.Message}");
+                        }
+
+                        scanResults = scanner.ScanFile(file_path, rules);
+                        currentScanWindow.AddFilesScanned();
+
+                        // Create scan report and add to scan window
+                        YARAScanReport scanReport = new YARAScanReport(file_path, scanResults, hybridResult);
+
+                        bool hybridThreatsFound = IsHybridThreatDetected(hybridResult);
+
+                        // If any threats detected, 
+                        if (hybridThreatsFound)
+                        {
+                            scanReport.isHybridThreatDetected = true;
+                        }
+
+                        currentScanWindow.AddScanResult(scanReport);
+                        displayScanResults(scanResults, file_path);
                     }
-                }
-                catch (Exception ex)
-                {
-                    mainWindow.LogMessage($"Error getting file size for {file_path}: {ex.Message}");
-                }
-
-                scanResults = scanner.ScanFile(file_path, rules);
-                currentScanWindow.AddFilesScanned();
-
-                // Create scan report and add to scan window
-                YARAScanReport scanReport = new YARAScanReport(file_path, scanResults,hybridResult);
-
-               
-                bool hybridThreatsFound = IsHybridThreatDetected(hybridResult);
-
-                // If any threats detected, 
-                if (hybridThreatsFound)
-                {
-                    scanReport.isHybridThreatDetected = true;
-                }
-
-                currentScanWindow.AddScanResult(scanReport);
+                    catch (Exception ex)
+                    {
+                        mainWindow.LogMessage($"Error during scan: {ex.Message}");
+                    }
+                });
 
                 mainWindow.LogMessage("Scan SUCCESS!!...");
-                //mainWindow.LogMessage(pr.ToString());
                 currentScanWindow.CompleteScan();
-                displayScanResults(scanResults, file_path);
-
             }
             else
             {
                 mainWindow.LogMessage("Scan Cancelled!!...");
             }
-                
+
         }
 
         public async Task scanFiles(List<String> files, string originalFolderPath = null)
         {
             ShowScanWindow(mainWindow);
 
-            // original folder path, count directories
+            // original folder path, to count directories
             if (!string.IsNullOrEmpty(originalFolderPath) && Directory.Exists(originalFolderPath))
             {
                 try
@@ -191,7 +199,7 @@ namespace NAZARICK_Protocol.service
                 }
             }
 
-            List<ScanResult> scanResults =null;
+            List<ScanResult> scanResults = null;
             if (files != null)
             {
                 if (scanner != null) { }
@@ -200,43 +208,64 @@ namespace NAZARICK_Protocol.service
                     scanner = new Scanner();
                 }
                 mainWindow.LogMessage("Scanning !!...");
-                foreach (string file in files)
-                {
-                    HybridFileAnalyzer hy = new HybridFileAnalyzer();
-                    HybridAnalysisResult hybridResult = await hy.AnalyzeFile(file);
-                    currentScanWindow.UpdateCurrentFile(file);
 
-                    // Get file size and add to data scanned
-                    try
+                // Moving the scanning loop to a background task (teh ui was gettnig stuck here)
+                await Task.Run(async () =>
+                {
+                    foreach (string file in files)
                     {
-                        FileInfo fileInfo = new FileInfo(file);
-                        if (fileInfo.Exists)
+                        // Checking if scan should continue (if user stops it)
+                        if (!currentScanWindow.IsScanRunning)
+                            break;
+
+                        try
                         {
-                            currentScanWindow.AddDataScanned(fileInfo.Length);
+                            HybridFileAnalyzer hy = new HybridFileAnalyzer();
+                            HybridAnalysisResult hybridResult = await hy.AnalyzeFile(file);
+
+                            // Update UI on main thread
+                            currentScanWindow.UpdateCurrentFile(file);
+
+                            // Get file size and add to data scanned
+                            try
+                            {
+                                FileInfo fileInfo = new FileInfo(file);
+                                if (fileInfo.Exists)
+                                {
+                                    currentScanWindow.AddDataScanned(fileInfo.Length);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                mainWindow.LogMessage($"Error getting file size for {file}: {ex.Message}");
+                            }
+
+                            scanResults = scanner.ScanFile(file, rules);
+                            currentScanWindow.AddFilesScanned();
+                            scanReport = new YARAScanReport(file, scanResults, hybridResult);
+                            bool hybridThreatsFound = IsHybridThreatDetected(hybridResult);
+
+                            // If any threats detected, 
+                            if (hybridThreatsFound)
+                            {
+                                scanReport.isHybridThreatDetected = true;
+                            }
+
+                            currentScanWindow.AddScanResult(scanReport);
+                            displayScanResults(scanResults, file);
+
+                            // Small delay to allow UI to update and remain responsive
+                            await Task.Delay(10);
+                        }
+                        catch (Exception ex)
+                        {
+                            mainWindow.LogMessage($"Error scanning file {file}: {ex.Message}");
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        mainWindow.LogMessage($"Error getting file size for {file}: {ex.Message}");
-                    }
+                });
 
-
-                    scanResults = scanner.ScanFile(file, rules);
-                    currentScanWindow.AddFilesScanned();
-                    scanReport = new YARAScanReport(file,scanResults, hybridResult);
-                    bool hybridThreatsFound = IsHybridThreatDetected(hybridResult);
-                    // If any threats detected, 
-                    if (hybridThreatsFound)
-                    {
-                        scanReport.isHybridThreatDetected = true;
-                    }
-
-                    currentScanWindow.AddScanResult(scanReport);
-                    displayScanResults(scanResults, file);
-                }
-                currentScanWindow.CompleteScan();              
-                mainWindow.LogMessage("Scan SUCCESS!!...");                  
-
+                currentScanWindow.CompleteScan();
+                mainWindow.LogMessage("Scan SUCCESS!!...");
             }
             else
             {
