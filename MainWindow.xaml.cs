@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using Microsoft.VisualBasic.Devices;
+using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using NAZARICK_Protocol.service;
 using PeNet.Header.Resource;
@@ -7,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Windows;
+using System.Management;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
@@ -16,6 +18,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+
 
 namespace NAZARICK_Protocol
 {
@@ -30,6 +33,10 @@ namespace NAZARICK_Protocol
         private int threatsBlockedToday = 0;
         private RealTimeMonitor _monitor;
         private String _currentWatchPath;
+        private PerformanceCounter cpuCounter;
+        private PerformanceCounter memoryCounter;
+        private ComputerInfo computerInfo;
+        private bool systemMonitoringReady = false;
 
         public MainWindow()
         {
@@ -39,6 +46,8 @@ namespace NAZARICK_Protocol
 
             InitializeSystem();
             StartSystemMonitoring();
+            // Initialize performance counters asynchronously
+            _ = InitializePerformanceCountersAsync();
         }
 
         private void InitializeSystem()
@@ -46,7 +55,16 @@ namespace NAZARICK_Protocol
             LogMessage("[INFO] N.A.Z.A.R.I.C.K. Protocol starting...");
             LogMessage("[INFO] Initializing YARA engine...");
 
-            
+            // Initialize ComputerInfo  for performance counters
+            try
+            {
+                computerInfo = new ComputerInfo();
+                LogMessage("[INFO] Basic system monitoring initialized");
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"[ERROR] Failed to initialize basic system monitoring: {ex.Message}");
+            }
 
 
             string yaraResult = pw.initialize_YARA();
@@ -68,22 +86,55 @@ namespace NAZARICK_Protocol
 
         private void UpdateSystemInfo(object sender, EventArgs e)
         {
-            // Simulate system monitoring (need to replace with actual system calls)
-            Random rand = new Random();
+            try
+            {
+                // Get real CPU usage
+                float cpuUsage = cpuCounter?.NextValue() ?? 0;
+                int cpuPercentage = (int)Math.Round(cpuUsage);
 
-            // Update CPU usage
-            int cpuUsage = rand.Next(10, 80);
-            CpuUsageBar.Value = cpuUsage;
-            CpuUsageText.Text = $"{cpuUsage}%";
+                Dispatcher.Invoke(() =>
+                {
+                    CpuUsageBar.Value = cpuPercentage;
+                    CpuUsageText.Text = $"{cpuPercentage}%";
+                });
 
-            // Update Memory usage
-            int memoryUsage = rand.Next(40, 90);
-            MemoryUsageBar.Value = memoryUsage;
-            MemoryUsageText.Text = $"{memoryUsage}%";
+                // Get real memory usage
+                if (computerInfo != null)
+                {
+                    ulong totalMemory = computerInfo.TotalPhysicalMemory;
+                    ulong availableMemory = computerInfo.AvailablePhysicalMemory;
+                    ulong usedMemory = totalMemory - availableMemory;
 
-            // Update counters
-            FilesScannedText.Text = filesScannedToday.ToString();
-            ThreatsBlockedText.Text = threatsBlockedToday.ToString();
+                    double memoryUsagePercent = (double)usedMemory / totalMemory * 100;
+                    int memoryPercentage = (int)Math.Round(memoryUsagePercent);
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        MemoryUsageBar.Value = memoryPercentage;
+                        MemoryUsageText.Text = $"{memoryPercentage}%";
+                    });
+                }
+
+                // Update counters
+                Dispatcher.Invoke(() =>
+                {
+                    FilesScannedText.Text = filesScannedToday.ToString();
+                    ThreatsBlockedText.Text = threatsBlockedToday.ToString();
+                });
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"[ERROR] System monitoring update failed: {ex.Message}");
+
+                // Fallback to show error state
+                Dispatcher.Invoke(() =>
+                {
+                    CpuUsageText.Text = "N/A";
+                    MemoryUsageText.Text = "N/A";
+                    CpuUsageBar.Value = 0;
+                    MemoryUsageBar.Value = 0;
+                });
+            }
         }
 
         public void LogMessage(string message)
@@ -246,7 +297,21 @@ namespace NAZARICK_Protocol
         {
             LogMessage("[INFO] Shutting down N.A.Z.A.R.I.C.K. Protocol...");
 
+
+
+
             systemTimer?.Stop();
+            // Dispose of performance counters
+            try
+            {
+                cpuCounter?.Dispose();
+                memoryCounter?.Dispose();
+                LogMessage("[INFO] System monitoring cleanup completed");
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"[ERROR] System monitoring cleanup failed: {ex.Message}");
+            }
 
             if (pw != null)
             {
@@ -420,6 +485,42 @@ namespace NAZARICK_Protocol
             }
 
             return filePaths;
+        }
+
+        private async Task InitializePerformanceCountersAsync()
+        {
+            LogMessage("[INFO] Initializing performance counters in background...");
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    // Initialize performance counters on background thread
+                    cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+                    memoryCounter = new PerformanceCounter("Memory", "Available MBytes");
+
+                    // Initial reading to prime the CPU counter
+                    cpuCounter.NextValue();
+
+                    // Small delay to let the counter stabilize
+                    System.Threading.Thread.Sleep(1000);
+
+                    systemMonitoringReady = true;
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        LogMessage("[INFO] Performance counters initialized successfully");
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        LogMessage($"[ERROR] Failed to initialize performance counters: {ex.Message}");
+                        LogMessage("[INFO] Falling back to basic memory monitoring only");
+                    });
+                }
+            });
         }
 
 
