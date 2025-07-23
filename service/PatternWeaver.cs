@@ -128,6 +128,21 @@ namespace NAZARICK_Protocol.service
                 mainWindow.LogMessage(hybridResult.ToString());
 
                 currentScanWindow.UpdateCurrentFile(file_path);
+
+                // Get file size and add to data scanned
+                try
+                {
+                    FileInfo fileInfo = new FileInfo(file_path);
+                    if (fileInfo.Exists)
+                    {
+                        currentScanWindow.AddDataScanned(fileInfo.Length);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    mainWindow.LogMessage($"Error getting file size for {file_path}: {ex.Message}");
+                }
+
                 scanResults = scanner.ScanFile(file_path, rules);
                 currentScanWindow.AddFilesScanned();
 
@@ -158,9 +173,24 @@ namespace NAZARICK_Protocol.service
                 
         }
 
-        public async Task scanFiles(List<String> files)
+        public async Task scanFiles(List<String> files, string originalFolderPath = null)
         {
             ShowScanWindow(mainWindow);
+
+            // original folder path, count directories
+            if (!string.IsNullOrEmpty(originalFolderPath) && Directory.Exists(originalFolderPath))
+            {
+                try
+                {
+                    var directories = Directory.GetDirectories(originalFolderPath, "*", SearchOption.AllDirectories);
+                    currentScanWindow.AddFoldersScanned(directories.Length + 1); // +1 for root
+                }
+                catch (Exception ex)
+                {
+                    mainWindow.LogMessage($"Could not count directories: {ex.Message}");
+                }
+            }
+
             List<ScanResult> scanResults =null;
             if (files != null)
             {
@@ -175,6 +205,22 @@ namespace NAZARICK_Protocol.service
                     HybridFileAnalyzer hy = new HybridFileAnalyzer();
                     HybridAnalysisResult hybridResult = await hy.AnalyzeFile(file);
                     currentScanWindow.UpdateCurrentFile(file);
+
+                    // Get file size and add to data scanned
+                    try
+                    {
+                        FileInfo fileInfo = new FileInfo(file);
+                        if (fileInfo.Exists)
+                        {
+                            currentScanWindow.AddDataScanned(fileInfo.Length);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        mainWindow.LogMessage($"Error getting file size for {file}: {ex.Message}");
+                    }
+
+
                     scanResults = scanner.ScanFile(file, rules);
                     currentScanWindow.AddFilesScanned();
                     scanReport = new YARAScanReport(file,scanResults, hybridResult);

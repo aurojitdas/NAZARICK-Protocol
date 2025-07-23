@@ -434,7 +434,7 @@ namespace NAZARICK_Protocol
                 LogMessage(file);
                 
             }
-            _ = pw.scanFiles(files);
+            _ = pw.scanFiles(files, folderpath);
 
 
         }
