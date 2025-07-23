@@ -6,6 +6,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Threading.Tasks;
 
 namespace NAZARICK_Protocol
 {
@@ -24,28 +25,50 @@ namespace NAZARICK_Protocol
             this.mainWindow = mainWindow;
             vt = new VirusTotalAPI("68d9e1716c7df15e701bcce1addafd4231c2d288c5869726ecb9a31ff28ba878", this.mainWindow);
 
-            LoadResults();
+            // Load results asynchronously to keep UI responsive
+            _ = LoadResultsAsync();
         }
 
-        private void LoadResults()
+        private async Task LoadResultsAsync()
         {
-            // Creates display objects for the ListView with styling
-            var displayResults = scanReports.Select(r => new
+            // Show loading state
+            SummaryText.Text = $"Loading {scanReports.Count} results...";
+            ResultsListView.ItemsSource = null;
+
+            // Process data structure in background thread (no UI objects)
+            List<dynamic> displayResults = null;
+            await Task.Run(() =>
+            {
+                displayResults = scanReports.Select(r => new
+                {
+                    FilePath = r.FilePath,
+                    IsClean = !(r.isYaraThreatDetected || r.isHybridThreatDetected == true),
+                    MatchedRulesCount = r.MatchedRulesCount,
+                    ThreatsList = r.MatchedRules.Any() ? string.Join(", ", r.MatchedRules) : "None"
+                }).Cast<dynamic>().ToList();
+            });
+
+            // Create UI objects on main thread
+            var finalDisplayResults = displayResults.Select(r => new
             {
                 FilePath = r.FilePath,
-                StatusText = (r.isYaraThreatDetected || r.isHybridThreatDetected == true) ? "THREAT" : "CLEAN",
-                StatusBackground = (r.isYaraThreatDetected || r.isHybridThreatDetected == true) ? new SolidColorBrush(Color.FromRgb(255, 230, 230)) : new SolidColorBrush(Color.FromRgb(230, 255, 230)),
-                StatusForeground = (r.isYaraThreatDetected || r.isHybridThreatDetected == true) ? new SolidColorBrush(Color.FromRgb(220, 53, 69)) : new SolidColorBrush(Color.FromRgb(40, 167, 69)),
+                StatusText = r.IsClean ? "CLEAN" : "THREAT",
+                StatusBackground = r.IsClean ? new SolidColorBrush(Color.FromRgb(230, 255, 230)) : new SolidColorBrush(Color.FromRgb(255, 230, 230)),
+                StatusForeground = r.IsClean ? new SolidColorBrush(Color.FromRgb(40, 167, 69)) : new SolidColorBrush(Color.FromRgb(220, 53, 69)),
                 MatchedRulesCount = r.MatchedRulesCount,
-                ThreatsList = r.MatchedRules.Any() ? string.Join(", ", r.MatchedRules) : "None"
+                ThreatsList = r.ThreatsList
             }).ToList();
 
-            // Sets the ListView data source
-            ResultsListView.ItemsSource = displayResults;
+            // Update UI on main thread
+            ResultsListView.ItemsSource = finalDisplayResults;
+            UpdateSummaryStats();
+        }
 
+        private void UpdateSummaryStats()
+        {
             // Update summary statistics
             int totalFiles = scanReports.Count;
-            int maliciousFiles = scanReports.Count(r => r.isYaraThreatDetected);
+            int maliciousFiles = scanReports.Count(r => r.isYaraThreatDetected || r.isHybridThreatDetected == true);
             int cleanFiles = totalFiles - maliciousFiles;
             int totalRulesMatched = scanReports.Sum(r => r.MatchedRulesCount);
 

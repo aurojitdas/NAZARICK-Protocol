@@ -153,8 +153,22 @@
                     </Grid>
                 </Border>
                 <!-- Table Content -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0">
-                    <ListView x:Name="ResultsListView" BorderThickness="0" Background="Transparent">
+                <Border Grid.Row="1">
+                    <ListView x:Name="ResultsListView" 
+                              BorderThickness="0" 
+                              Background="Transparent"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling"
+                              VirtualizingPanel.IsContainerVirtualizable="True"
+                              ScrollViewer.CanContentScroll="True"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel IsVirtualizing="True" 
+                                                       VirtualizationMode="Recycling"/>
+                            </ItemsPanelTemplate>
+                        </ListView.ItemsPanel>
                         <ListView.ItemContainerStyle>
                             <Style TargetType="ListViewItem">
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -240,7 +254,7 @@
                             </Style>
                         </ListView.ItemContainerStyle>
                     </ListView>
-                </ScrollViewer>
+                </Border>
             </Grid>
         </Border>
         <!-- Action Buttons -->
