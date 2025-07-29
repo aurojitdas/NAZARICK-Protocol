@@ -1,7 +1,7 @@
 ﻿<Window x:Class="NAZARICK_Protocol.ScanResultsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="N.A.Z.A.R.I.C.K. Protocol - Scan Results" Height="700" Width="1200"
+        Title="N.A.Z.A.R.I.C.K. Protocol - Scan Results" Height="700" Width="1050"
         WindowStartupLocation="CenterScreen"
         Background="#F5F5F5">
     <Window.Resources>

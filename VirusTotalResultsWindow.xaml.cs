@@ -171,22 +171,8 @@ namespace NAZARICK_Protocol
             }
 
             txtSha256.Text = analysis.Sha256 ?? "Not available";
-            txtMd5.Text = analysis.Md5 ?? "Not available";
-
-            // Handle permalink visibility
-            if (!string.IsNullOrEmpty(analysis.Permalink))
-            {
-                txtPermalink.Visibility = Visibility.Visible;
-                btnViewReport.IsEnabled = true;
-            }
-            else
-            {
-                txtPermalink.Text = "Not available";
-                txtPermalink.Foreground = new SolidColorBrush(Color.FromRgb(102, 102, 102));
-                txtPermalink.TextDecorations = null;
-                txtPermalink.Cursor = Cursors.Arrow;
-                btnViewReport.IsEnabled = false;
-            }
+            txtMd5.Text = analysis.Md5 ?? "Not available";            
+            
         }
 
         private string FormatFileSize(long bytes)

@@ -218,11 +218,8 @@
                                 <TextBlock x:Name="txtSha256" Text="-" FontSize="11" FontFamily="Consolas" TextWrapping="Wrap" Margin="0,0,0,15"/>
 
                                 <TextBlock Text="MD5" FontSize="12" Foreground="#666666" Margin="0,0,0,3"/>
-                                <TextBlock x:Name="txtMd5" Text="-" FontSize="11" FontFamily="Consolas" Margin="0,0,0,15"/>
-
-                                <TextBlock Text="VirusTotal Report" FontSize="12" Foreground="#666666" Margin="0,0,0,3"/>
-                                <TextBlock x:Name="txtPermalink" Text="View Full Report" FontSize="14" Foreground="#007BFF" 
-                                          TextDecorations="Underline" Cursor="Hand" MouseLeftButtonUp="Permalink_Click"/>
+                                <TextBlock x:Name="txtMd5" Text="-" FontSize="11" FontFamily="Consolas" Margin="0,0,0,15"/>                              
+                               
                             </StackPanel>
                         </Grid>
                     </StackPanel>
@@ -237,42 +234,7 @@
                 BorderBrush="#E0E0E0" 
                 BorderThickness="0,1,0,0">
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="40,0">
-                <Button x:Name="btnViewReport"
-                        Content="View Full Report"
-                        Width="140"
-                        Height="36"
-                        Margin="0,0,15,0"
-                        Background="#007BFF"
-                        Foreground="White"
-                        BorderThickness="0"
-                        FontSize="14"
-                        FontWeight="SemiBold"
-                        Cursor="Hand"
-                        Click="BtnViewReport_Click">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Background" Value="#007BFF"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" 
-                                                CornerRadius="6">
-                                            <ContentPresenter HorizontalAlignment="Center" 
-                                                            VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#0056B3"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="40,0">                
                 <Button x:Name="btnClose"
                         Content="Close"
                         Width="100"
