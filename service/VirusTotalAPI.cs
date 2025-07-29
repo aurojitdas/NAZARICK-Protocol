@@ -1,4 +1,5 @@
-﻿using System;
+﻿// VirusTotalAPI.cs
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,7 +13,6 @@ namespace NAZARICK_Protocol.service
 {
     internal class VirusTotalAPI
     {
-
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
         private const string BaseUrl = "https://www.virustotal.com/api/v3/";
@@ -34,9 +34,9 @@ namespace NAZARICK_Protocol.service
             {
                 // The API endpoint for file hash lookup
                 string requestUrl = $"files/{fileHash}";
-                HttpResponseMessage response = await _httpClient.GetAsync(requestUrl);                
+                HttpResponseMessage response = await _httpClient.GetAsync(requestUrl);
                 response.EnsureSuccessStatusCode(); // Throws an exception if not a success status code.
-                string jsonResponse = await response.Content.ReadAsStringAsync();               
+                string jsonResponse = await response.Content.ReadAsStringAsync();
                 return jsonResponse;
             }
             catch (HttpRequestException e)
@@ -55,7 +55,6 @@ namespace NAZARICK_Protocol.service
                 return null;
             }
         }
-
 
         /// <summary>
         /// Uploads a file to VirusTotal, waits for analysis completion, and returns the results.
@@ -279,6 +278,9 @@ namespace NAZARICK_Protocol.service
                     fileInfo = attributes;
                 }
 
+                // Extract filename using improved logic
+                string extractedFilename = ExtractFilename(attributes, fileInfo, isAnalysisResponse);
+
                 var analysis = new VirusTotalFileAnalysisResults
                 {
                     // Scan statistics
@@ -286,8 +288,9 @@ namespace NAZARICK_Protocol.service
                     SuspiciousDetections = stats.GetProperty("suspicious").GetInt32(),
                     UndetectedCount = stats.GetProperty("undetected").GetInt32(),
 
-                    // File attributes
-                    MeaningfulName = attributes.TryGetProperty("meaningful_name", out var name) ? name.GetString() : "N/A",
+                    // File attributes with improved filename extraction
+                    FileName = extractedFilename,
+                    MeaningfulName = extractedFilename, // For backward compatibility
                     Sha256 = fileInfo.TryGetProperty("sha256", out var sha256) ? sha256.GetString() : "N/A",
                     Md5 = fileInfo.TryGetProperty("md5", out var md5) ? md5.GetString() : "N/A",
                     FileSize = fileInfo.TryGetProperty("size", out var size) ? size.GetInt64() : 0,
@@ -333,6 +336,138 @@ namespace NAZARICK_Protocol.service
                 _mw.LogMessage($"Could not find an expected key in JSON response: {e.Message}");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Extracts filename from VirusTotal response using multiple fallback strategies
+        /// </summary>
+        /// <param name="attributes">The attributes section of the response</param>
+        /// <param name="fileInfo">The file info section</param>
+        /// <param name="isAnalysisResponse">Whether this is an analysis or hash lookup response</param>
+        /// <returns>Best available filename</returns>
+        private string ExtractFilename(JsonElement attributes, JsonElement fileInfo, bool isAnalysisResponse)
+        {
+            // Check meaningful_name
+            if (attributes.TryGetProperty("meaningful_name", out var meaningfulName) &&
+                !string.IsNullOrWhiteSpace(meaningfulName.GetString()))
+            {
+                return meaningfulName.GetString();
+            }
+
+            // Check names array (most common location)
+            if (attributes.TryGetProperty("names", out var names) && names.ValueKind == JsonValueKind.Array)
+            {
+                var namesList = names.EnumerateArray()
+                    .Select(n => n.GetString())
+                    .Where(n => !string.IsNullOrWhiteSpace(n))
+                    .ToList();
+
+                if (namesList.Any())
+                {
+                    // Return the most common name or first one
+                    return namesList.GroupBy(x => x)
+                        .OrderByDescending(g => g.Count())
+                        .First().Key;
+                }
+            }
+
+            // Check type_description (sometimes contains filename info)
+            if (attributes.TryGetProperty("type_description", out var typeDesc) &&
+                !string.IsNullOrWhiteSpace(typeDesc.GetString()))
+            {
+                string desc = typeDesc.GetString();
+                // Extract filename if it contains one (e.g., "Executable file (example.exe)")
+                var match = System.Text.RegularExpressions.Regex.Match(desc, @"\(([^)]+\.[^)]+)\)");
+                if (match.Success)
+                {
+                    return match.Groups[1].Value;
+                }
+            }
+
+            // Check file info for original name (for upload responses)
+            if (isAnalysisResponse && fileInfo.TryGetProperty("name", out var fileName) &&
+                !string.IsNullOrWhiteSpace(fileName.GetString()))
+            {
+                return fileName.GetString();
+            }
+
+            // Check submission_names array
+            if (attributes.TryGetProperty("submission_names", out var submissionNames) &&
+                submissionNames.ValueKind == JsonValueKind.Array)
+            {
+                var submissionNamesList = submissionNames.EnumerateArray()
+                    .Select(n => n.GetString())
+                    .Where(n => !string.IsNullOrWhiteSpace(n))
+                    .ToList();
+
+                if (submissionNamesList.Any())
+                {
+                    return submissionNamesList.First();
+                }
+            }
+
+            // Priority 6: Generate filename from hash and file type
+            string fileExtension = GetFileExtension(attributes);
+            if (fileInfo.TryGetProperty("sha256", out var sha256))
+            {
+                return $"{sha256.GetString().Substring(0, 8)}{fileExtension}";
+            }
+            if (fileInfo.TryGetProperty("md5", out var md5))
+            {
+                return $"{md5.GetString().Substring(0, 8)}{fileExtension}";
+            }
+
+            return "unknown_file";
+        }
+
+        /// <summary>
+        /// Determines file extension based on VirusTotal response data
+        /// </summary>
+        /// <param name="attributes">The attributes section of the response</param>
+        /// <returns>Appropriate file extension</returns>
+        private string GetFileExtension(JsonElement attributes)
+        {
+            if (attributes.TryGetProperty("type_description", out var typeDesc))
+            {
+                string desc = typeDesc.GetString().ToLower();
+
+                // Common file type mappings
+                if (desc.Contains("executable") || desc.Contains(".exe")) return ".exe";
+                if (desc.Contains("dll") || desc.Contains("dynamic link library")) return ".dll";
+                if (desc.Contains("pdf")) return ".pdf";
+                if (desc.Contains("zip") || desc.Contains("archive")) return ".zip";
+                if (desc.Contains("document") || desc.Contains("word")) return ".doc";
+                if (desc.Contains("image") || desc.Contains("bitmap")) return ".img";
+                if (desc.Contains("text")) return ".txt";
+                if (desc.Contains("script")) return ".bat";
+                if (desc.Contains("msi") || desc.Contains("installer")) return ".msi";
+                if (desc.Contains("jar")) return ".jar";
+                if (desc.Contains("apk")) return ".apk";
+            }
+
+            if (attributes.TryGetProperty("magic", out var magic))
+            {
+                string magicDesc = magic.GetString().ToLower();
+                if (magicDesc.Contains("pe32")) return ".exe";
+                if (magicDesc.Contains("pdf")) return ".pdf";
+                if (magicDesc.Contains("zip")) return ".zip";
+                if (magicDesc.Contains("elf")) return ".elf";
+                if (magicDesc.Contains("mach-o")) return ".bin";
+            }
+
+            // Check file type tags
+            if (attributes.TryGetProperty("type_tags", out var typeTags) &&
+                typeTags.ValueKind == JsonValueKind.Array)
+            {
+                var tags = typeTags.EnumerateArray().Select(t => t.GetString().ToLower()).ToList();
+                if (tags.Contains("executable")) return ".exe";
+                if (tags.Contains("pe32")) return ".exe";
+                if (tags.Contains("pdf")) return ".pdf";
+                if (tags.Contains("archive")) return ".zip";
+                if (tags.Contains("installer")) return ".msi";
+            }
+
+            return ".bin"; // Default binary extension
         }
 
         public void Dispose()
