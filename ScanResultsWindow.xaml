@@ -1,7 +1,7 @@
 ﻿<Window x:Class="NAZARICK_Protocol.ScanResultsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="N.A.Z.A.R.I.C.K. Protocol - Scan Results" Height="700" Width="1050"
+        Title="N.A.Z.A.R.I.C.K. Protocol - Scan Results" Height="700" Width="1200"
         WindowStartupLocation="CenterScreen"
         Background="#F5F5F5">
     <Window.Resources>
@@ -83,6 +83,8 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <!-- Total Files -->
                     <StackPanel Grid.Column="0" HorizontalAlignment="Center">
@@ -105,8 +107,22 @@
                         <TextBlock Text="Threats" FontSize="12" Foreground="#666666"
                                    HorizontalAlignment="Center"/>
                     </StackPanel>
-                    <!-- Total Rules Matched -->
+                    <!-- YARA Detections -->
                     <StackPanel Grid.Column="3" HorizontalAlignment="Center">
+                        <TextBlock x:Name="YaraDetectionCount" Text="0" FontSize="24" FontWeight="Bold"
+                                   Foreground="#ff6b35" HorizontalAlignment="Center"/>
+                        <TextBlock Text="YARA Detections" FontSize="12" Foreground="#666666"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    <!-- Hybrid Detections -->
+                    <StackPanel Grid.Column="4" HorizontalAlignment="Center">
+                        <TextBlock x:Name="HybridDetectionCount" Text="0" FontSize="24" FontWeight="Bold"
+                                   Foreground="#6f42c1" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Hybrid Detections" FontSize="12" Foreground="#666666"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    <!-- Total Rules Matched -->
+                    <StackPanel Grid.Column="5" HorizontalAlignment="Center">
                         <TextBlock x:Name="TotalRulesCount" Text="0" FontSize="24" FontWeight="Bold"
                                    Foreground="#333333" HorizontalAlignment="Center"/>
                         <TextBlock Text="Total Rules Matched" FontSize="12" Foreground="#666666"

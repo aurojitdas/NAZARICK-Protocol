@@ -64,7 +64,7 @@ namespace NAZARICK_Protocol.service
                 _watcher.EnableRaisingEvents = false;
                 _watcher.Created -= OnFileEvent;
                 _watcher.Changed -= OnFileEvent;
-                _watcher.Renamed -= OnFileRenamed;
+                _watcher.Renamed -= OnFileEvent;
                 _watcher.Dispose();
                 _watcher = null;
             }

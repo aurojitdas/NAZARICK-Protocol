@@ -131,6 +131,9 @@ namespace NAZARICK_Protocol.service
             "Mozilla Corporation",
             "Apple Inc.",
             "Vmware, Inc",
+            "Oracle America, Inc",
+            "",
+            "",
             "Amazon.com Services LLC"
         };
 
@@ -305,11 +308,12 @@ namespace NAZARICK_Protocol.service
                                     if (isTrusted)
                                     {
                                         score -= 120;
-                                        result.SignatureInfo = $"File has valid signature from trusted entity: {subject} [-50 points]";
+                                        result.SignatureInfo = $"File has valid signature from trusted entity: {subject} [-120 points]";
                                     }
                                     else
                                     {
-                                        result.SignatureInfo = $"File has valid signature from: {subject} [0 points]";
+                                        score -= 30;
+                                        result.SignatureInfo = $"File has valid signature from: {subject} [-50 points]";
                                     }
                                 }
                                 else

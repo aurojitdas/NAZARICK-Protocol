@@ -72,13 +72,19 @@ namespace NAZARICK_Protocol
             int cleanFiles = totalFiles - maliciousFiles;
             int totalRulesMatched = scanReports.Sum(r => r.MatchedRulesCount);
 
+            // New detection counts
+            int yaraDetections = scanReports.Count(r => r.isYaraThreatDetected);
+            int hybridDetections = scanReports.Count(r => r.isHybridThreatDetected == true);
+
             // Update summary text
-            SummaryText.Text = $"Total Files: {totalFiles} | Clean: {cleanFiles} | Threats: {maliciousFiles} | Total Rules Matched: {totalRulesMatched}";
+            SummaryText.Text = $"Total Files: {totalFiles} | Clean: {cleanFiles} | Threats: {maliciousFiles} | YARA: {yaraDetections} | Hybrid: {hybridDetections} | Total Rules Matched: {totalRulesMatched}";
 
             // Update summary cards
             TotalFilesCount.Text = totalFiles.ToString();
             CleanFilesCount.Text = cleanFiles.ToString();
             ThreatFilesCount.Text = maliciousFiles.ToString();
+            YaraDetectionCount.Text = yaraDetections.ToString();
+            HybridDetectionCount.Text = hybridDetections.ToString();
             TotalRulesCount.Text = totalRulesMatched.ToString();
         }
 
