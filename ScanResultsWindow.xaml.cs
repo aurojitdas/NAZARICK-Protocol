@@ -120,9 +120,8 @@ namespace NAZARICK_Protocol
                 var resultsWindow = new VirusTotalResultsWindow();
                 resultsWindow.Owner = this;
                 resultsWindow.Show();
-                resultsWindow.ShowLoading("Checking file hash...");
-
-                string response = await vt.CheckFileHash("fe115f0be1c1ffd7176b8e1b1f88a41b");
+                resultsWindow.ShowLoading("Checking file hash...");                
+                string response = await vt.CheckFileHash(HashCalc.CalculateMd5(filePath));
 
                 if (!string.IsNullOrEmpty(response))
                 {
