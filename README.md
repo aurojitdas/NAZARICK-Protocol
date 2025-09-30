@@ -2,7 +2,8 @@
 
 <div align="center">
   
-  ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg?cacheSeconds=2592000)
+  ![Version](https://img.shields.io/badge/version-0.8-blue.svg?cacheSeconds=2592000)
+  ![GitHub release](https://img.shields.io/github/v/release/aurojitdas/NAZARICK-Protocol)
   ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
   ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
   ![.NET](https://img.shields.io/badge/.NET-Framework-purple.svg)
@@ -20,6 +21,10 @@
 ## 📋 Overview
 
 N.A.Z.A.R.I.C.K. Protocol is a powerful malware analysis tool designed for security researchers, malware analysts, and power users. It provides a multi-layered approach to threat detection by combining static analysis, pattern matching with YARA rules, and integration with VirusTotal API for real-time threat intelligence.
+
+### 💾 Quick Download
+
+**Ready to use? [Download the latest release (v0.8)](https://github.com/aurojitdas/NAZARICK-Protocol/releases/tag/Version_0.8)** - No compilation required!
 
 ## ✨ Features
 
@@ -39,14 +44,33 @@ N.A.Z.A.R.I.C.K. Protocol is a powerful malware analysis tool designed for secur
 
 - Windows 10/11 (64-bit)
 - .NET Framework 4.7.2 or higher
-- Visual Studio 2019 or later (for building from source)
 
-### Quick Start
+### Option 1: Download Pre-built Release (Recommended) 📦
+
+The easiest way to get started is to download the pre-compiled release:
+
+1. **Download the latest release**
+   - Go to [Releases](https://github.com/aurojitdas/NAZARICK-Protocol/releases/latest)
+   - Download `NAZARICK.Protocol.v0.8.zip` from the latest release
+   - Current stable version: [v0.8](https://github.com/aurojitdas/NAZARICK-Protocol/releases/tag/Version_0.8)
+
+2. **Extract and run**
+   ```bash
+   # Extract the ZIP file to your desired location
+   # Navigate to the extracted folder
+   # Run NAZARICK Protocol.exe
+   ```
+
+3. **That's it!** The application is ready to use.
+
+### Option 2: Build from Source (For Developers) 🔧
+
+If you want to modify the code or contribute to the project:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/nazarick-protocol.git
-   cd nazarick-protocol
+   git clone https://github.com/aurojitdas/NAZARICK-Protocol.git
+   cd NAZARICK-Protocol
    ```
 
 2. **Open the solution**
@@ -252,9 +276,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📧 Contact
 
-Project Maintainer - [your-email@example.com](mailto:your-email@example.com)
+Project Maintainer - [Aurojit Das](https://github.com/aurojitdas)
 
-Project Link: [https://github.com/yourusername/nazarick-protocol](https://github.com/yourusername/nazarick-protocol)
+Project Link: [https://github.com/aurojitdas/NAZARICK-Protocol](https://github.com/aurojitdas/NAZARICK-Protocol)
+
+Latest Release: [Download v0.8](https://github.com/aurojitdas/NAZARICK-Protocol/releases/tag/Version_0.8)
 
 ---
 
