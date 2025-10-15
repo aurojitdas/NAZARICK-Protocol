@@ -523,6 +523,17 @@ namespace NAZARICK_Protocol
             });
         }
 
+        private void ApplyVirusTotalApiKeyButton_Click(object sender, RoutedEventArgs e)
+        {
+            string apiKey = VirusTotalApiKeyTextBox.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                MessageBox.Show("Please enter a valid API key.", "Invalid Input",
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+        }
 
     }
 }

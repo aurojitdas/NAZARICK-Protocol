@@ -161,7 +161,7 @@
                             <StackPanel>
                                 <TextBlock Text="Threats Detected" FontSize="14" FontWeight="SemiBold" Foreground="#333333"/>
                                 <TextBlock x:Name="ThreatsDetectedText" Text="0" FontSize="20" FontWeight="Bold" Foreground="#FF0000" Margin="0,5,0,0"/>
-                                <TextBlock Text="Total quarantined" FontSize="12" Foreground="#666666"/>
+
                             </StackPanel>
                         </Border>
                         <Border Grid.Column="2" Style="{StaticResource CardStyle}" Margin="10,0,0,0">
@@ -311,18 +311,41 @@
                             </Border>
                             <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
                                 <StackPanel>
-                                    <TextBlock Text="Scheduled Scans" FontSize="18" FontWeight="SemiBold" Foreground="#333333"/>
-                                    <TextBlock Text="Automatically run scans at specified times" 
+                                    <TextBlock Text="VirusTotal Integration" FontSize="18" FontWeight="SemiBold" Foreground="#333333"/>
+                                    <TextBlock Text="Configure VirusTotal API key for enhanced threat detection" 
                                                FontSize="14" Margin="0,5,0,15" Foreground="#666666"/>
-                                    <CheckBox Content="Enable scheduled scans" Foreground="#333333" FontSize="14"/>
-                                    <StackPanel Margin="0,10,0,0">
-                                        <TextBlock Text="Frequency:" FontSize="14" Foreground="#333333" Margin="0,0,0,5"/>
-                                        <ComboBox Width="200" HorizontalAlignment="Left" SelectedIndex="1">
-                                            <ComboBoxItem Content="Daily"/>
-                                            <ComboBoxItem Content="Weekly"/>
-                                            <ComboBoxItem Content="Monthly"/>
-                                        </ComboBox>
-                                    </StackPanel>
+
+                                    <TextBlock Text="API Key:" FontSize="14" Foreground="#333333" Margin="0,0,0,5"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBox x:Name="VirusTotalApiKeyTextBox" 
+                                                 Grid.Column="0"
+                                                 Height="35" 
+                                                 Padding="10,8"
+                                                 VerticalContentAlignment="Center"
+                                                 FontSize="14"
+                                                 Margin="0,0,10,0"
+                                                 Background="White"
+                                                 BorderBrush="#CCCCCC"
+                                                 BorderThickness="1"/>
+
+                                        <Button x:Name="ApplyVirusTotalApiKeyButton" 
+                                                Grid.Column="1"
+                                                Content="Apply" 
+                                                Width="100"
+                                                Style="{StaticResource AccentButtonStyle}"
+                                                Click="ApplyVirusTotalApiKeyButton_Click"/>
+                                    </Grid>
+
+                                    <TextBlock Text="Enter your VirusTotal API key to enable file hash checking against the VirusTotal database." 
+                                               FontSize="12" 
+                                               Margin="0,10,0,0" 
+                                               Foreground="#999999"
+                                               TextWrapping="Wrap"/>
                                 </StackPanel>
                             </Border>
                             <Border Style="{StaticResource CardStyle}">
