@@ -45,21 +45,16 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   build:
-
     strategy:
       matrix:
         configuration: [Debug, Release]
-
-    runs-on: windows-latest  # For a list of available runner types, refer to
-                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+    runs-on: windows-latest
 
     env:
-      Solution_Name: your-solution-name                         # Replace with your solution name, i.e. MyWpfApp.sln.
-      Test_Project_Path: your-test-project-path                 # Replace with the path to your test project, i.e. MyWpfApp.Tests\MyWpfApp.Tests.csproj.
-      Wap_Project_Directory: your-wap-project-directory-name    # Replace with the Wap project directory relative to the solution, i.e. MyWpfApp.Package.
-      Wap_Project_Path: your-wap-project-path                   # Replace with the path to your Wap project, i.e. MyWpf.App.Package\MyWpfApp.Package.wapproj.
+      Test_Project_Path: ""                        # Optional: set if you have a specific test project
+      Wap_Project_Directory: ""                    # Optional: set if your WAP project is in a subdir
+      Wap_Project_Path: ""                         # Optional: set if you know your .wapproj path
 
     steps:
     - name: Checkout
@@ -67,47 +62,96 @@ jobs:
       with:
         fetch-depth: 0
 
-    # Install the .NET Core workload
     - name: Install .NET Core
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
 
-    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v2
 
-    # Execute all unit tests in the solution
-    - name: Execute unit tests
-      run: dotnet test
+    - name: Find solution file
+      id: find_sln
+      shell: pwsh
+      run: |
+        $sln = Get-ChildItem -Path . -Filter *.sln -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+        if (-not $sln) {
+          Write-Error "No solution file (*.sln) found in the repository. Please add one or set solution/project paths in the workflow."
+          exit 1
+        }
+        Write-Host "Found solution: $($sln.FullName)"
+        Write-Output "slnPath=$($sln.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-    # Restore the application to populate the obj folder with RuntimeIdentifiers
+    - name: Execute unit tests
+      shell: pwsh
+      run: |
+        if ($env:Test_Project_Path -and $env:Test_Project_Path -ne "") {
+          Write-Host "Running tests in specified project: $env:Test_Project_Path"
+          dotnet test $env:Test_Project_Path -c ${{ matrix.configuration }} --no-restore
+        } else {
+          Write-Host "Running tests for solution: ${{ steps.find_sln.outputs.slnPath }}"
+          dotnet test "$${{ steps.find_sln.outputs.slnPath }}" -c ${{ matrix.configuration }} --no-restore
+        }
+
     - name: Restore the application
-      run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
+      shell: pwsh
       env:
         Configuration: ${{ matrix.configuration }}
-
-    # Decode the base 64 encoded pfx and save the Signing_Certificate
-    - name: Decode the pfx
       run: |
-        $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.Base64_Encoded_Pfx }}")
-        $certificatePath = Join-Path -Path $env:Wap_Project_Directory -ChildPath GitHubActionsWorkflow.pfx
-        [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
+        msbuild "$${{ steps.find_sln.outputs.slnPath }}" /t:Restore /p:Configuration=$env:Configuration
 
-    # Create the app package by building and packaging the Windows Application Packaging project
+    - name: Decode the pfx
+      if: secrets.Base64_Encoded_Pfx != ''
+      shell: pwsh
+      run: |
+        if (-not $env:Wap_Project_Directory -or $env:Wap_Project_Directory -eq '') {
+          $targetDir = (Get-Location).Path
+        } else {
+          $targetDir = $env:Wap_Project_Directory
+        }
+        $pfx_cert_byte = [System.Convert]::FromBase64String("$${{ secrets.Base64_Encoded_Pfx }}")
+        $certificatePath = Join-Path -Path $targetDir -ChildPath GitHubActionsWorkflow.pfx
+        [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
+        Write-Host "Wrote signing certificate to: $certificatePath"
+
     - name: Create the app package
-      run: msbuild $env:Wap_Project_Path /p:Configuration=$env:Configuration /p:UapAppxPackageBuildMode=$env:Appx_Package_Build_Mode /p:AppxBundle=$env:Appx_Bundle /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:PackageCertificatePassword=${{ secrets.Pfx_Key }}
+      shell: pwsh
       env:
         Appx_Bundle: Always
         Appx_Bundle_Platforms: x86|x64
         Appx_Package_Build_Mode: StoreUpload
         Configuration: ${{ matrix.configuration }}
+      run: |
+        if ($env:Wap_Project_Path -and $env:Wap_Project_Path -ne '') {
+          $projToBuild = $env:Wap_Project_Path
+        } else {
+          $wapproj = Get-ChildItem -Path . -Filter *.wapproj -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $wapproj) {
+            Write-Host "No Windows Application Packaging project (.wapproj) found. Skipping app package creation."
+            exit 0
+          }
+          $projToBuild = $wapproj.FullName
+        }
 
-    # Remove the pfx
+        Write-Host "Packaging project: $projToBuild"
+        msbuild $projToBuild /p:Configuration=$env:Configuration /p:UapAppxPackageBuildMode=$env:Appx_Package_Build_Mode /p:AppxBundle=$env:Appx_Bundle /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:AppxBundlePlatforms=$env:Appx_Bundle_Platforms
+
     - name: Remove the pfx
-      run: Remove-Item -path $env:Wap_Project_Directory\GitHubActionsWorkflow.pfx
+      if: secrets.Base64_Encoded_Pfx != ''
+      shell: pwsh
+      run: |
+        if ($env:Wap_Project_Directory -and $env:Wap_Project_Directory -ne '') {
+          $certificatePath = Join-Path -Path $env:Wap_Project_Directory -ChildPath GitHubActionsWorkflow.pfx
+        } else {
+          $certificatePath = Join-Path -Path (Get-Location).Path -ChildPath GitHubActionsWorkflow.pfx
+        }
+        if (Test-Path $certificatePath) {
+          Remove-Item -Path $certificatePath -Force
+          Write-Host "Removed: $certificatePath"
+        } else {
+          Write-Host "No pfx found to remove at: $certificatePath"
+        }
 
-    # Upload the MSIX package: https://github.com/marketplace/actions/upload-a-build-artifact
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
