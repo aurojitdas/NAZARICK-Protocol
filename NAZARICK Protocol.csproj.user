@@ -7,6 +7,9 @@
     <Compile Update="FullReportWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="ModernDialog.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="PEAnalysisResultsWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
