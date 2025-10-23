@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace NAZARICK_Protocol.service
 {
@@ -19,15 +20,39 @@ namespace NAZARICK_Protocol.service
         private const long MaxFileSize = 32 * 1024 * 1024; // 32MB limit
         MainWindow _mw;
 
-        public VirusTotalAPI(string apiKey, MainWindow mw)
+        public VirusTotalAPI(MainWindow mw)
         {
-            _apiKey = apiKey;
             _mw = mw;
+            _apiKey = Properties.Settings.Default.VirusTotalApiKey;
+            
+            // Check for missing API key
+            if (string.IsNullOrWhiteSpace(_apiKey))
+            {
+                ShowMissingApiKeyDialog();
+                //throw new InvalidOperationException("VirusTotal API key not configured.");
+            }
+
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Add("x-apikey", _apiKey);
             _httpClient.BaseAddress = new Uri(BaseUrl);
         }
 
+        private async void ShowMissingApiKeyDialog()
+        {
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+               
+                Window owner = _mw ?? Application.Current.MainWindow;
+
+                MessageBox.Show(owner,
+                    "Please configure your VirusTotal API key in the Settings window.",
+                    "API Key Missing",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            });
+
+        }
         public async Task<string> CheckFileHash(string fileHash)
         {
             try

@@ -21,14 +21,13 @@ namespace NAZARICK_Protocol.service
         Scanner? scanner;
         MainWindow mainWindow;
         private ScanWindow currentScanWindow;
-        private VirusTotalAPI vt;
         PEAnalyzer Pe;
         YARAScanReport scanReport;
 
         public PatternWeaver(MainWindow mainWindow)
         {
             this.mainWindow = mainWindow;
-            vt = new VirusTotalAPI("68d9e1716c7df15e701bcce1addafd4231c2d288c5869726ecb9a31ff28ba878", this.mainWindow);
+           
         }
         public String initialize_YARA()
         {

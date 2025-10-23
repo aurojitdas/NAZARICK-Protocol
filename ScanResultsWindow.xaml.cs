@@ -23,7 +23,7 @@ namespace NAZARICK_Protocol
             scanReports = reports ?? new List<YARAScanReport>();
             parentScanWindow = parent;
             this.mainWindow = mainWindow;
-            vt = new VirusTotalAPI("68d9e1716c7df15e701bcce1addafd4231c2d288c5869726ecb9a31ff28ba878", this.mainWindow);
+            vt = new VirusTotalAPI(this.mainWindow);
 
             // Load results asynchronously to keep UI responsive
             _ = LoadResultsAsync();
